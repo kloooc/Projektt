@@ -1,12 +1,28 @@
-from flask import Flask, render_template, request
+
+import hashlib
+from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import subprocess
+from flask_session import Session
 
 app = Flask(__name__)
+app.secret_key = 'bardzosekretnyklucz'
+
+# Inicjalizacja obsługi sesji
+app.config['SESSION_TYPE'] = 'filesystem'  # Możesz użyć różnych typów sesji
+Session(app)
+
+@app.before_request
+def set_default_user_type():
+    if 'user_type' not in session:
+        session['user_type'] = 'guest'
+
 
 @app.route('/')
 def show_main():
-    return render_template('main.html')
+    user_type = session.get('user_type', 'guest')
+
+    return render_template('main.html', user_type=user_type)
 
 @app.route('/teams')
 def display_teams():
@@ -145,6 +161,36 @@ def show_stats():
     # Wyświetl szablon HTML z danymi
     return render_template('stats.html', teamA=teamA, teamB=teamB, stats=stats)
 
+@app.route('/login_register', methods=['GET', 'POST'])
+def login_register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # Sprawdź, czy użytkownik istnieje w bazie danych i hasło jest poprawne
+        conn = sqlite3.connect('football_teams.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT username, password, user_type FROM users WHERE username=?", (username,))
+        user_data = cursor.fetchone()
+        conn.close()
+
+        if user_data and password == user_data[1]:
+            # Ustaw sesję, aby oznaczyć użytkownika jako zalogowanego
+            session['username'] = username
+            session['user_type'] = user_data[2]
+            return redirect(url_for('show_main'))
+
+    return render_template('login_register.html')
+
+@app.route('/logout')
+def logout():
+    # Usuń dane sesji, aby wylogować użytkownika
+    session.pop('username', None)
+    session.pop('user_type', None)
+    return redirect(url_for('show_main'))
+
+# Dodaj pozostałe trasy i funkcje obsługujące operacje, takie jak rejestracja, obsługa sesji itp.
+# Należy odpowiednio dostosować te trasy do swoich potrzeb.
 
 if __name__ == '__main__':
     app.run()

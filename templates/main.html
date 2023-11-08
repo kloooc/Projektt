@@ -1,13 +1,27 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Menu</title>
 </head>
+
 <body>
     <h1>Menu</h1>
     <ul>
         <li><a href="/teams">Drużyny</a></li>
         <li><a href="/matches">Mecze</a></li>
+
+        {% if user_type == 'guest' %}
+        <li><a href="/login_register">Logowanie/Rejestracja</a></li>
+        {% elif user_type == 'user' %}
+        <!-- Dodaj opcje dostępne tylko dla użytkownika -->
+        <li><a href="/user_profile">Profil użytkownika</a></li>
+        <li><a href="/logout">Wyloguj się</a></li>
+        {% elif user_type == 'admin' %}
+        <!-- Dodaj opcje dostępne tylko dla administratora -->
+        <li><a href="/admin_panel">Panel administratora</a></li>
+        <li><a href="/logout">Wyloguj się</a></li>
+        {% endif %}
     </ul>
 
     <!-- Przycisk do uruchamiania skryptu -->
@@ -15,7 +29,7 @@
 
     <script>
         // Po kliknięciu przycisku "Uruchom Skrypt"
-        document.getElementById("runScript").addEventListener("click", function() {
+        document.getElementById("runScript").addEventListener("click", function () {
             // Wykonaj żądanie GET do trasy /run_script
             fetch('/sql', { method: 'GET' })
                 .then(response => {
@@ -32,4 +46,5 @@
         });
     </script>
 </body>
+
 </html>
