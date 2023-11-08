@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Menu</title>
+</head>
+<body>
+    <h1>Menu</h1>
+    <ul>
+        <li><a href="/teams">Drużyny</a></li>
+        <li><a href="/matches">Mecze</a></li>
+    </ul>
+
+    <!-- Przycisk do uruchamiania skryptu -->
+    <button id="runScript">Uruchom Skrypt</button>
+
+    <script>
+        // Po kliknięciu przycisku "Uruchom Skrypt"
+        document.getElementById("runScript").addEventListener("click", function() {
+            // Wykonaj żądanie GET do trasy /run_script
+            fetch('/sql', { method: 'GET' })
+                .then(response => {
+                    if (response.status === 200) {
+                        alert('Skrypt został uruchomiony.');
+                    } else {
+                        alert('Wystąpił błąd podczas uruchamiania skryptu.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Błąd:', error);
+                    alert('Wystąpił błąd podczas uruchamiania skryptu.');
+                });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Statystyki meczu</title>
+</head>
+<body>
+    <h1>Statystyki meczu</h1>
+    
+    <h2>{{ teamA }} vs {{ teamB }}</h2>
+    
+    <table>
+        <tr>
+            <th>Kategoria</th>
+            <th>{{ teamA }}</th>
+            <th>{{ teamB }}</th>
+        </tr>
+        {% for stat in stats %}
+        <tr>
+            <td>{{ stat[0] }}</td>
+            <td>{{ stat[1] }}</td>
+            <td>{{ stat[2] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

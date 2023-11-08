@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Wyniki meczów</title>
+    <style>
+        /* Styl dla ukrywania zawartości listy */
+        .hidden {
+            display: none;
+        }
+    </style>
+    <script>
+        // Funkcja do przełączania widoczności listy
+        function toggleList(id) {
+            var list = document.getElementById(id);
+            list.style.display = list.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function openStats(matchID) {
+        // Otwórz stronę 'stats.html' z parametrem 'matchID' w nowym oknie lub karcie przeglądarki
+        window.open('/stats?matchID=' + matchID, 'Stats', 'width=600,height=400');
+        }
+    </script>
+</head>
+<body>
+    <h1>Wyniki meczów</h1>
+
+    <h2 onclick="toggleList('upcoming-list')">Nadchodzące mecze</h2>
+    <ul id="upcoming-list" class="">
+        {% for match in upcoming_matches %}
+        <li>
+            {{ match[0] }}
+            <br>
+            <img src="{{ match[3] }}" alt="Logo drużyny" height="13em" onclick="openStats('{{ match[0] }}')"> {{ match[1] }} -:- {{ match[2] }} <img src="{{ match[4] }}" alt="Logo drużyny" height="13em" onclick="openStats('{{ match[0] }}')">
+            <br>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <h2 onclick="toggleList('played-list')">Rozegrane mecze</h2>
+    <ul id="played-list" class="hidden">
+        {% for match in played_matches %}
+        <li onclick="openStats('{{ match[7] }}')">
+            {{ match[0] }}
+            <br>
+            <img src="{{ match[5] }}" alt="Logo drużyny" height="13em" onclick="openStats('{{ match[0] }}')"> {{ match[1] }} {{ match[2] }}:{{ match[3] }} {{ match[4] }} <img src="{{ match[6] }}" alt="Logo drużyny" height="13em" >
+            <br>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
