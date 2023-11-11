@@ -191,7 +191,7 @@ def show_stats_upcoming():
     conn = sqlite3.connect('football_teams.db')
     cursor = conn.cursor()
 
-    cursor.execute("SELECT teamsA.team AS teamA, teamsB.team AS teamB FROM matches INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team WHERE matchID = ?", (matchID,))
+    cursor.execute("SELECT distinct teamsA.team AS teamA, teamsB.team AS teamB FROM matches INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team WHERE matchID = ?", (matchID,))
     result = cursor.fetchone()
 
     if result is None:
@@ -264,6 +264,76 @@ def login_register():
 
     return render_template('login_register.html')
 
+@app.route('/admin')
+def admin():
+    # Połącz się z bazą danych
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    
+    # Pobierz mecze nadchodzące
+    cursor.execute("""SELECT matches.date, teamsA.team AS teamA, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
+    FROM matches
+    INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
+    INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
+    WHERE matches.scoreA IS NULL AND matches.scoreB IS NULL
+        ORDER BY
+    CASE
+        WHEN SUBSTR(matches.date, 4, 2) IN ('10', '11', '12') THEN 1
+        ELSE 2
+    END, 
+    CAST(SUBSTR(matches.date, 4, 2) AS SIGNED),  -- Sortowanie miesiąca jako liczby
+    SUBSTR(matches.date, 1, 2) ASC;  -- Sortowanie dnia
+    """)
+    upcoming_matches = cursor.fetchall()
+
+
+    
+    # Zamknij połączenie z bazą danych
+    conn.close()
+    
+    # Przekaż dane do szablonu HTML i wyświetl go
+    return render_template('admin.html', upcoming_matches=upcoming_matches)
+
+@app.route('/update')
+def update():
+    matchID = request.args.get('matchID')
+
+    if matchID is None:
+        print('Brak matchID w zapytaniu!')
+        # Możesz obsłużyć ten przypadek, np. przekierowując użytkownika gdzie indziej
+        return "Brak matchID"
+
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT teamsA.team AS teamA, teamsB.team AS teamB FROM matches INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team WHERE matchID = ?", (matchID,))
+    result = cursor.fetchone()
+
+    if result is None:
+        print('Brak meczu o podanym matchID!')
+        # Możesz obsłużyć ten przypadek, np. przekierowując użytkownika gdzie indziej
+        return "Brak meczu o podanym matchID"
+
+    teamA, teamB = result
+
+    # Pobierz statystyki meczu z bazy danych
+    cursor.execute("SELECT distinct category FROM stats ")
+    stats = cursor.fetchall()
+    
+    # Zamknij połączenie z bazą danych
+    conn.close()
+
+    
+    return render_template('update.html',teamA=teamA, teamB=teamB,stats=stats)
+
+@app.route('/download_stats', methods=['POST'])
+def download_stats():
+    link = request.form['link']
+
+    # Tutaj możesz użyć pobrania linku do uruchomienia skryptu z linkiem
+    subprocess.run(["python", "pobieraniestats.py", link])
+
+    return redirect(url_for('show_main'))
 
 @app.route('/logout')
 def logout():

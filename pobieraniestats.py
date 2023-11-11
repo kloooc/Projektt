@@ -2,13 +2,16 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import sqlite3
+import sys
+
+# Pobierz link z argumentów wiersza polecenia
+link = sys.argv[1]
 
 # Inicjalizacja przeglądarki (np. Google Chrome)
 driver = webdriver.Chrome()
 
 # Otwarcie strony z wynikami
-url = "https://www.flashscore.pl/mecz/EwR7QQRA/#/szczegoly-meczu/statystyki-meczu/0"
-driver.get(url)
+driver.get(link)
 
 # Poczekaj, aż strona się załaduje (możesz dostosować czas)
 driver.implicitly_wait(10)
@@ -18,9 +21,25 @@ page_source = driver.page_source
 
 # Zamknij przeglądarkę
 driver.quit()
-
 # Przetwórz źródło strony za pomocą BeautifulSoup
 soup = BeautifulSoup(page_source, 'html.parser')
+score_divs = soup.find_all('div', class_='detailScore__wrapper')
+
+score=[]
+
+# Iteracja po elementach score_divs i dodawanie przyciętych wyników do listy score
+for score_div in score_divs:
+    score_text = score_div.text.strip() if score_div else "Brak danych"
+    # Rozdzielenie wyniku na dwie liczby
+    scores = score_text.split('-')
+    # Dodaj wyniki do listy
+    score.extend(scores)
+
+# Wydrukuj zebrane wyniki
+for i, result in enumerate(score):
+    print(f"Wynik {i+1}: {result}")
+
+
 
 # Znajdź divy o określonych klasach
 participant_divs = soup.find_all('div', class_='participant__participantName participant__overflow')
@@ -96,14 +115,22 @@ else:
 
 print(f"Match id: {matchID}")
 
+
 for category, home_value, away_value in zip(category_divs, home_divs, away_divs):
     category_text = category.text.strip()
     home_value_text = home_value.text.strip()
     away_value_text = away_value.text.strip()
 
-    # Wykonaj zapytanie SQL, aby wstawić dane do tabeli "stats"
+
+    # Aktualizacja tabeli stats 
     cursor.execute("INSERT INTO stats (match_id, category, home_value, away_value) VALUES (?, ?, ?, ?)",
                    (matchID, category_text, home_value_text, away_value_text))
+    conn.commit
+    print("Aktualizacja została pomyślnie wykonana.")
+
+    # Aktualizacja tabeli matches o wyniki
+    cursor.execute('UPDATE matches SET scoreA = ?, scoreB = ? WHERE matchID = ?', (score[0], score[1], matchID))
+    conn.commit()
 
 # Zatwierdź zmiany w bazie danych
 conn.commit()

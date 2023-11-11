@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Statystyki Meczu</title>
+</head>
+
+<body>
+    <h1>Statystyki Meczu</h1>
+
+    <form method="POST" action="/download_stats">
+        <label for="link">Podaj link do statystyk:</label>
+        <input type="text" id="link" name="link" required>
+        <input type="submit" value="Pobierz">
+    </form>
+
+    <h1>Statystyki meczu</h1>
+    
+    <h2>{{ teamA }} vs {{ teamB }}</h2>
+    
+    <table>
+        <tr>
+            <th>Kategoria</th>
+            <th>{{ teamA }}</th>
+            <th>{{ teamB }}</th>
+        </tr>
+        {% for stat in stats %}
+        <tr>
+            <form method="POST" action="/submit_form">
+            <td>{{ stat[0] }}</td>
+            <td>
+                <input type="number" id="{{ stat[0] }}" name="{{ stat[0] }}">
+            </td>
+            <td>
+                <input type="number" id="{{ stat[0] }}" name="{{ stat[0] }}">
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    <input type="submit" value="Dodaj">
+        
+</form>
+
+</body>
+
+</html>
