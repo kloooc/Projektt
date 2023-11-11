@@ -1,9 +1,25 @@
 
 import hashlib
+import signal
+import sys
 from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import subprocess
 from flask_session import Session
+import math
+from math import exp
+import atexit
+
+# Rejestracja funkcji do wywołania przed zakończeniem programu
+atexit.register(lambda: session.clear())
+
+def poisson(k, lambd):
+    return (lambd**k) * exp(-lambd) / factorial(k)
+
+def factorial(n):
+    if n == 0 or n == 1:
+        return 1
+    return n * factorial(n-1)
 
 app = Flask(__name__)
 app.secret_key = 'bardzosekretnyklucz'
@@ -98,7 +114,7 @@ def show_matches():
     cursor = conn.cursor()
     
     # Pobierz mecze nadchodzące
-    cursor.execute("""SELECT matches.date, teamsA.team AS teamA, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB
+    cursor.execute("""SELECT matches.date, teamsA.team AS teamA, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
     FROM matches
     INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
     INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
@@ -161,6 +177,72 @@ def show_stats():
     # Wyświetl szablon HTML z danymi
     return render_template('stats.html', teamA=teamA, teamB=teamB, stats=stats)
 
+from flask import render_template
+
+@app.route('/statsUP')
+def show_stats_upcoming():
+    matchID = request.args.get('matchID')
+
+    if matchID is None:
+        print('Brak matchID w zapytaniu!')
+        # Możesz obsłużyć ten przypadek, np. przekierowując użytkownika gdzie indziej
+        return "Brak matchID"
+
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT teamsA.team AS teamA, teamsB.team AS teamB FROM matches INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team WHERE matchID = ?", (matchID,))
+    result = cursor.fetchone()
+
+    if result is None:
+        print('Brak meczu o podanym matchID!')
+        # Możesz obsłużyć ten przypadek, np. przekierowując użytkownika gdzie indziej
+        return "Brak meczu o podanym matchID"
+
+    teamA, teamB = result
+
+    cursor.execute("SELECT id_team FROM teams WHERE team = ?", (teamA,))
+    teamA_id = cursor.fetchone()[0]
+
+    cursor.execute("SELECT id_team FROM teams WHERE team = ?", (teamB,))
+    teamB_id = cursor.fetchone()[0]
+
+    cursor.execute("SELECT scoreA FROM matches WHERE teamA_id = ? AND scoreA IS NOT NULL", (teamA_id,))
+    scores_teamA = cursor.fetchall()
+
+    scores_teamA = [score[0] for score in scores_teamA if score[0] is not None]
+
+    print("Scores TeamA:", scores_teamA)
+
+    cursor.execute("SELECT scoreB FROM matches WHERE teamB_id = ? AND scoreB IS NOT NULL", (teamB_id,))
+    scores_teamB = cursor.fetchall()
+
+    scores_teamB = [score[0] for score in scores_teamB if score[0] is not None]
+
+    print("Scores TeamB:", scores_teamB)
+
+    lambda_teamA = max(0.1, sum(scores_teamA) / len(scores_teamA))
+    lambda_teamB = max(0.1, sum(scores_teamB) / len(scores_teamB))
+
+    print(lambda_teamA)
+    print(lambda_teamB)
+
+    szanse_teamA = [poisson(k, lambda_teamA) for k in range(4)]
+    szanse_teamB = [poisson(k, lambda_teamB) for k in range(4)]
+
+    print(szanse_teamA)
+    print(szanse_teamB)
+
+    # Oblicz średnią liczbę bramek dla drużyn
+    srednia_teamA = sum(scores_teamA) / len(scores_teamA)
+    srednia_teamB = sum(scores_teamB) / len(scores_teamB)
+
+    conn.close()
+    return render_template('statsUP.html', teamA=teamA, teamB=teamB, srednia_teamA=srednia_teamA, srednia_teamB=srednia_teamB, prawdopodobienstwa_teamA=szanse_teamA, prawdopodobienstwa_teamB=szanse_teamB)
+
+
+
+
 @app.route('/login_register', methods=['GET', 'POST'])
 def login_register():
     if request.method == 'POST':
@@ -182,15 +264,14 @@ def login_register():
 
     return render_template('login_register.html')
 
+
 @app.route('/logout')
 def logout():
     # Usuń dane sesji, aby wylogować użytkownika
     session.pop('username', None)
     session.pop('user_type', None)
+    session.clear()
     return redirect(url_for('show_main'))
 
-# Dodaj pozostałe trasy i funkcje obsługujące operacje, takie jak rejestracja, obsługa sesji itp.
-# Należy odpowiednio dostosować te trasy do swoich potrzeb.
-
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

@@ -8,7 +8,7 @@ cursor = conn.cursor()
 
 
 # Zapytanie SQL z użyciem obecnej daty i dokładnego porównywania dni, miesięcy, godzin i minut
-cursor.execute('SELECT username, password, user_type FROM users WHERE username=1111')
+cursor.execute('SELECT teamsA.team AS teamA, teamsB.team AS teamB FROM matches INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team WHERE matchID = 303')
 
 # Pobranie wyników zapytania
 results = cursor.fetchall()

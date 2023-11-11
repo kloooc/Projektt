@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Statystyki Meczu</title>
+</head>
+
+<body>
+    <h1>Statystyki Meczu</h1>
+
+    {% if teamA and teamB %}
+        <h2>{{ teamA }} vs {{ teamB }}</h2>
+
+        <p>Średnia liczba bramek drużyny {{ teamA }} z poprzednich meczy: {{ srednia_teamA|float|round(2) }}</p>
+        <p>Średnia liczba bramek drużyny {{ teamB }} z poprzednich meczy: {{ srednia_teamB|float|round(2) }}</p>
+
+        <h3>Prawdopodobieństwo strzelenia danej liczby bramek:</h3>
+        <p>Dla drużyny {{ teamA }}:</p>
+        <ul>
+            {% for k in range(4) %}
+                <li>{{ k }} bramki: {{ (prawdopodobienstwa_teamA[k] * 100)|float|round(2) }}%</li>
+            {% endfor %}
+        </ul>
+
+        <p>Dla drużyny {{ teamB }}:</p>
+        <ul>
+            {% for k in range(4) %}
+                <li>{{ k }} bramki: {{ (prawdopodobienstwa_teamB[k] * 100)|float|round(2) }}%</li>
+            {% endfor %}
+        </ul>
+
+    {% else %}
+        <p>Mecz o podanym ID nie istnieje.</p>
+    {% endif %}
+
+</body>
+
+</html>
