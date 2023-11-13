@@ -3,12 +3,6 @@
 
 <head>
     <title>Wyniki meczów</title>
-    <style>
-        /* Styl dla ukrywania zawartości listy */
-        .hidden {
-            display: none;
-        }
-    </style>
     <script>
         // Funkcja do przełączania widoczności listy
         function toggleList(id) {
@@ -26,9 +20,35 @@
             window.open('/statsUP?matchID=' + matchID, 'StatsUP', 'width=600,height=400');
         }
     </script>
+
 </head>
 
 <body>
+
+    <header>
+        <ul>
+            {% if user_type == 'guest' %}
+            <li class="user"><a href="/login_register">Logowanie/Rejestracja</a></li>
+            {% elif user_type == 'user' %}
+            <!-- Dodaj opcje dostępne tylko dla użytkownika -->
+            <li class="user"><a href="/user_profile">Profil użytkownika</a></li>
+            <li class="user"><a href="/logout">Wyloguj się</a></li>
+            {% elif user_type == 'admin' %}
+            <!-- Dodaj opcje dostępne tylko dla administratora -->
+            <li class="admin"><a href="/admin">Panel administratora</a></li>
+            <li class="admin"><a href="/logout">Wyloguj się</a></li>
+            {% endif %}
+        </ul>
+    </header>
+
+    <ul>
+
+        <li><a href="/">Main</a></li>
+        <li><a href="/teams">Tabela</a></li>
+        <li><a href="/matches">Mecze</a></li>
+
+
+    </ul>
     <h1>Wyniki meczów</h1>
 
     <h2 onclick="toggleList('upcoming-list')">Nadchodzące mecze</h2>

@@ -1,17 +1,16 @@
+import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import sqlite3
 import sys
 
-# Pobierz link z argumentów wiersza polecenia
-link = sys.argv[1]
 
 # Inicjalizacja przeglądarki (np. Google Chrome)
 driver = webdriver.Chrome()
 
 # Otwarcie strony z wynikami
-driver.get(link)
+driver.get("https://www.flashscore.pl/mecz/SQSmQWkI/#/szczegoly-meczu/statystyki-meczu/0")
 
 # Poczekaj, aż strona się załaduje (możesz dostosować czas)
 driver.implicitly_wait(10)
@@ -39,6 +38,21 @@ for score_div in score_divs:
 for i, result in enumerate(score):
     print(f"Wynik {i+1}: {result}")
 
+date_divs = soup.find_all('div', class_='duelParticipant__startTime')
+
+# Przetwarzaj i wydrukowuj zawartość wszystkich znalezionych divów
+for date_div in date_divs:
+    date_text = date_div.text.strip()
+    print("Oryginalny tekst daty:", date_text)
+
+    try:
+        # Pobierz nową datę i godzinę z tekstu
+        new_date_obj = datetime.datetime.strptime(date_text, "%d.%m.%Y %H:%M")
+        print("Przekształcona data:", new_date_obj)
+    except ValueError as e:
+        print("Błąd konwersji daty:", e)
+
+    print("\n")
 
 
 # Znajdź divy o określonych klasach
@@ -55,32 +69,25 @@ for participant_div in participant_divs:
 for i, team_name in enumerate(teams):
     print(f"Drużyna {i+1}: {team_name}")
 
+
+
+# Przetwarzaj i wydrukowuj zawartość wszystkich znalezionych divów
 category_divs = soup.find_all('div', {'class': '_categoryName_11si3_5'})
 home_divs = soup.find_all('div', {'class': '_value_v26p1_5 _homeValue_v26p1_10'})
 away_divs = soup.find_all('div', {'class': '_value_v26p1_5 _awayValue_v26p1_14'})
 
+
+
 # Przetwarzaj i wydrukowuj zawartość wszystkich znalezionych divów
 for category_div, home_div, away_div in zip(category_divs, home_divs, away_divs):
-    print("Kategoria:", category_div.text.strip())
-    print("Home:", home_div.text.strip())
-    print("Away:", away_div.text.strip())
-    print("\n")
-
+    category_text = category_div.text.strip()
+    home_value_text = home_div.text.strip()
+    away_value_text = away_div.text.strip()
 
 # Połącz się z bazą danych
-conn = sqlite3.connect('football_teams.db')
-cursor = conn.cursor()
-
-
-
-cursor.execute('''CREATE TABLE IF NOT EXISTS stats (
-    match_id INTEGER,
-    category TEXT ,
-    home_value TEXT,
-    away_value TEXT,
-    FOREIGN KEY (match_id) REFERENCES matches (matchID)
-)''')
-
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    
 
 # Nazwy drużyn
 teamA = teams[0]
@@ -122,15 +129,28 @@ for category, home_value, away_value in zip(category_divs, home_divs, away_divs)
     away_value_text = away_value.text.strip()
 
 
-    # Aktualizacja tabeli stats 
-    cursor.execute("INSERT INTO stats (match_id, category, home_value, away_value) VALUES (?, ?, ?, ?)",
-                   (matchID, category_text, home_value_text, away_value_text))
-    conn.commit
-    print("Aktualizacja została pomyślnie wykonana.")
+# Pobierz categoryid na podstawie nazwy kategorii z tabeli categories
+    cursor.execute("SELECT categoryid FROM categories WHERE category_name = ?", (category_text,))
+    result = cursor.fetchone()
+    if result:
+        category_id = result[0]
+    else:
+        # Jeśli kategoria nie istnieje w tabeli categories, możesz zdecydować, co zrobić
+        print(f"Uwaga: Kategoria '{category_text}' nie istnieje w tabeli categories.")
+        continue
 
-    # Aktualizacja tabeli matches o wyniki
-    cursor.execute('UPDATE matches SET scoreA = ?, scoreB = ? WHERE matchID = ?', (score[0], score[1], matchID))
-    conn.commit()
+    cursor.execute("UPDATE matches SET date = ?, scoreA = ?, scoreB = ? WHERE matchID = ?",
+               (new_date_obj, score[0], score[1], matchID))
+    
+    cursor.execute("INSERT INTO stats (match_id, categoryid, home_value, away_value) VALUES (?, ?, ?, ?)",
+                   (matchID, category_id, home_value_text, away_value_text))
+
+    # Wydrukuj dane
+    print("Kategoria ID:", category_id)
+    print("home value:", home_value_text)
+    print("away value:", away_value_text)
+    print("\n")
+
 
 # Zatwierdź zmiany w bazie danych
 conn.commit()

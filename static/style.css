@@ -1,0 +1,84 @@
+/* style.css */
+html, body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.main-menu {
+    background-color: #f8f9fa; /* Kolor tła - jasny szary */
+    padding: 10px; /* Odstęp wewnętrzny */
+}
+
+.nav {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    list-style: none;
+    padding: 0;
+}
+
+.nav-item {
+    text-align: center;
+}
+
+.nav-link-main {
+    color: #343a40 !important; /* Kolor tekstu - ciemny szary */
+    text-decoration: none;
+    padding: 10px;
+    display: block;
+}
+
+.menu {
+    text-align: right; /* Wyrównaj do prawej strony */
+    margin-top: 20px; /* Dodaj margines na górze */
+}
+
+ul {
+    list-style-type: none; /* Usunięcie standardowych punktorów listy */
+    padding: 0; /* Usunięcie wewnętrznego marginesu listy */
+}
+
+li {
+    display: inline; /* Elementy listy wyświetlane obok siebie, a nie jeden pod drugim */
+    margin-left: 20px; /* Odstęp między elementami listy */
+}
+
+.matches-container {
+    margin-right: 20px;
+}
+
+.table-container {
+    flex: 2;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid white;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+
+.matches-container {
+    margin-right: 20px;
+}
+
+.table-container {
+    flex: 2;
+}
+
+img {
+    max-height: 50px; /* Maksymalna wysokość obrazka w tabeli */
+}
+.custom-padding {
+    padding-top: 20px;
+}
