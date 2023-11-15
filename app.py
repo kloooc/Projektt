@@ -84,7 +84,7 @@ def show_main():
         t.id_team
     ORDER BY
         Points DESC, Goal_Difference DESC
-    LIMIT 5; 
+    LIMIT 6; 
     """
 
     cursor.execute(query)
@@ -99,7 +99,7 @@ def show_main():
     WHERE matches.scoreA IS NULL AND matches.scoreB IS NULL
     ORDER BY
         matches.date  -- Sortowanie według daty rosnąco
-    LIMIT 5;
+    LIMIT 4;
     """)
     upcoming_matches = cursor.fetchall()
 
@@ -132,7 +132,7 @@ def display_teams():
     # Połącz się z bazą danych
     conn = sqlite3.connect('football_teams.db')
     cursor = conn.cursor()
-
+    user_type = session.get('user_type', 'guest')
     # Wykonaj zapytanie SQL
     query = """
     SELECT
@@ -192,13 +192,15 @@ def display_teams():
         team_with_new_id = (i,) + team[1:]
         teams_with_new_id.append(team_with_new_id)
 
-    return render_template('teams.html', teams=teams_with_new_id)
+    return render_template('teams.html', teams=teams_with_new_id, user_type=user_type)
 
 @app.route('/matches')
 def show_matches():
     # Połącz się z bazą danych
     conn = sqlite3.connect('football_teams.db')
     cursor = conn.cursor()
+    user_type = session.get('user_type', 'guest')
+
     
      # Pobierz mecze nadchodzące
     cursor.execute("""SELECT matches.date, teamsA.team AS teamA, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
@@ -235,7 +237,7 @@ def show_matches():
     conn.close()
     
     # Przekaż dane do szablonu HTML i wyświetl go
-    return render_template('matches.html', upcoming_matches=upcoming_matches, played_matches=played_matches)
+    return render_template('matches.html', upcoming_matches=upcoming_matches, played_matches=played_matches, user_type=user_type)
 
 @app.route('/stats')
 def show_stats():
@@ -248,6 +250,11 @@ def show_stats():
     cursor.execute("SELECT teamsA.team AS teamA, teamsB.team AS teamB FROM matches INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team WHERE matchID = ?", (matchID,))
     result = cursor.fetchone()
     
+
+    cursor.execute("SELECT date, scoreA, scoreB, matchID from matches where matchID=?",(matchID,))
+    match = cursor.fetchone()
+
+
     if result:
         teamA, teamB = result
     else:
@@ -258,11 +265,17 @@ def show_stats():
     cursor.execute("SELECT c.category_name, s.home_value, s.away_value FROM stats s JOIN categories c ON s.categoryid = c.categoryid WHERE s.match_id = ?", (matchID,))
     stats = cursor.fetchall()
     
+    cursor.execute("SELECT logo from teams where team=?",(teamA,))
+    logoA = cursor.fetchone()
+
+    cursor.execute("SELECT logo from teams where team=?",(teamB,))
+    logoB = cursor.fetchone()
+
     # Zamknij połączenie z bazą danych
     conn.close()
 
     # Wyświetl szablon HTML z danymi
-    return render_template('stats.html', teamA=teamA, teamB=teamB, stats=stats)
+    return render_template('stats.html', teamA=teamA, teamB=teamB, stats=stats,match=match, logoA=logoA, logoB=logoB)
 
 from flask import render_template
 
@@ -288,11 +301,20 @@ def show_stats_upcoming():
 
     teamA, teamB = result
 
+    cursor.execute("SELECT date, scoreA, scoreB, matchID from matches where matchID=?",(matchID,))
+    match = cursor.fetchone()
+
     cursor.execute("SELECT id_team FROM teams WHERE team = ?", (teamA,))
     teamA_id = cursor.fetchone()[0]
 
     cursor.execute("SELECT id_team FROM teams WHERE team = ?", (teamB,))
     teamB_id = cursor.fetchone()[0]
+
+    cursor.execute("SELECT logo from teams where team=?", (teamA,))
+    logoA = cursor.fetchone()
+
+    cursor.execute("SELECT logo from teams where team=?", (teamB,))
+    logoB = cursor.fetchone()
 
     cursor.execute("SELECT scoreA FROM matches WHERE teamA_id = ? AND scoreA IS NOT NULL", (teamA_id,))
     scores_teamA = cursor.fetchall()
@@ -325,7 +347,7 @@ def show_stats_upcoming():
     srednia_teamB = sum(scores_teamB) / len(scores_teamB)
 
     conn.close()
-    return render_template('statsUP.html', teamA=teamA, teamB=teamB, srednia_teamA=srednia_teamA, srednia_teamB=srednia_teamB, prawdopodobienstwa_teamA=szanse_teamA, prawdopodobienstwa_teamB=szanse_teamB)
+    return render_template('statsUP.html', teamA=teamA, teamB=teamB, logoA=logoA, match=match, logoB=logoB, srednia_teamA=srednia_teamA, srednia_teamB=srednia_teamB, prawdopodobienstwa_teamA=szanse_teamA, prawdopodobienstwa_teamB=szanse_teamB)
 
 
 
@@ -429,6 +451,75 @@ def logout():
     session.pop('user_type', None)
     session.clear()
     return redirect(url_for('show_main'))
+
+@app.route('/prematch')
+def show_prematch():
+    matchID = request.args.get('matchID')
+
+    if matchID is None:
+        print('Brak matchID w zapytaniu!')
+        # Możesz obsłużyć ten przypadek, np. przekierowując użytkownika gdzie indziej
+        return "Brak matchID"
+
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT date, scoreA, scoreB, matchID from matches where matchID=?",(matchID,))
+    match = cursor.fetchone()
+
+    cursor.execute("SELECT distinct teamsA.team AS teamA, teamsB.team AS teamB FROM matches INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team WHERE matchID = ?", (matchID,))
+    result = cursor.fetchone()
+    
+    if result is None:
+        print('Brak danych dla teamA i teamB')
+        return "Brak danych dla teamA i teamB"
+
+    teamA, teamB = result  # Przypisanie wartości do zmiennych teamA i teamB po pobraniu z bazy danych
+
+    cursor.execute("SELECT logo from teams where team=?", (teamA,))
+    logoA = cursor.fetchone()
+
+    cursor.execute("SELECT logo from teams where team=?", (teamB,))
+    logoB = cursor.fetchone()
+
+    cursor.execute("SELECT id_team FROM teams WHERE team = ?", (teamA,))
+    teamA_id = cursor.fetchone()[0]
+
+    cursor.execute("SELECT id_team FROM teams WHERE team = ?", (teamB,))
+    teamB_id = cursor.fetchone()[0]
+
+    cursor.execute("SELECT scoreA FROM matches WHERE teamA_id = ? AND scoreA IS NOT NULL", (teamA_id,))
+    scores_teamA = cursor.fetchall()
+
+    scores_teamA = [score[0] for score in scores_teamA if score[0] is not None]
+
+    print("Scores TeamA:", scores_teamA)
+
+    cursor.execute("SELECT scoreB FROM matches WHERE teamB_id = ? AND scoreB IS NOT NULL", (teamB_id,))
+    scores_teamB = cursor.fetchall()
+
+    scores_teamB = [score[0] for score in scores_teamB if score[0] is not None]
+
+    print("Scores TeamB:", scores_teamB)
+
+    lambda_teamA = max(0.1, sum(scores_teamA) / len(scores_teamA))
+    lambda_teamB = max(0.1, sum(scores_teamB) / len(scores_teamB))
+
+    print(lambda_teamA)
+    print(lambda_teamB)
+
+    szanse_teamA = [poisson(k, lambda_teamA) for k in range(4)]
+    szanse_teamB = [poisson(k, lambda_teamB) for k in range(4)]
+
+    print(szanse_teamA)
+    print(szanse_teamB)
+
+    # Oblicz średnią liczbę bramek dla drużyn
+    srednia_teamA = sum(scores_teamA) / len(scores_teamA)
+    srednia_teamB = sum(scores_teamB) / len(scores_teamB)
+
+    conn.close()
+    return render_template('prematch.html', teamA=teamA, teamB=teamB, logoA=logoA, logoB=logoB, srednia_teamA=srednia_teamA, match=match, srednia_teamB=srednia_teamB, prawdopodobienstwa_teamA=szanse_teamA, prawdopodobienstwa_teamB=szanse_teamB)
 
 if __name__ == '__main__':
     app.run(debug=True)

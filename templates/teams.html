@@ -2,35 +2,52 @@
 <html>
 <head>
     <title>Drużyny</title>
-
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
 
-    <header>
-        <ul>
-            {% if user_type == 'guest' %}
-            <li class="user"><a href="/login_register">Logowanie/Rejestracja</a></li>
-            {% elif user_type == 'user' %}
-            <!-- Dodaj opcje dostępne tylko dla użytkownika -->
-            <li class="user"><a href="/user_profile">Profil użytkownika</a></li>
-            <li class="user"><a href="/logout">Wyloguj się</a></li>
-            {% elif user_type == 'admin' %}
-            <!-- Dodaj opcje dostępne tylko dla administratora -->
-            <li class="admin"><a href="/admin">Panel administratora</a></li>
-            <li class="admin"><a href="/logout">Wyloguj się</a></li>
-            {% endif %}
-        </ul>
+    <header class="bg-dark text-danger p-3">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <a class="navbar-brand" href="/">Main</a>
+    
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+    
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    {% if user_type == 'guest' %}
+                    <li class="nav-item"><a class="nav-link text-white" href="/login_register">Logowanie/Rejestracja</a></li>
+                    {% elif user_type == 'user' %}
+                    <!-- Dodaj opcje dostępne tylko dla użytkownika -->
+                    <li class="nav-item"><a class="nav-link text-white" href="/user_profile">Profil użytkownika</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="/logout">Wyloguj się</a></li>
+                    {% elif user_type == 'admin' %}
+                    <!-- Dodaj opcje dostępne tylko dla administratora -->
+                    <li class="nav-item"><a class="nav-link text-white" href="/admin">Panel administratora</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="/logout">Wyloguj się</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
     </header>
+    <div class="main-menu">
+        <ul class="nav">
+            <li class="nav-item"><a class="nav-link-main text-light" href="/">Main</a></li>
+            <li class="nav-item"><a class="nav-link-main text-light" href="/teams">Tabela</a></li>
+            <li class="nav-item"><a class="nav-link-main text-light" href="/matches">Mecze</a></li>
+            <li class="nav-item"><a class="nav-link-main text-light" href="/archiwum">Archiwum</a></li>
+        </ul>
+    </div>
 
-    <ul>
-
-        <li><a href="/">Main</a></li>
-        <li><a href="/teams">Tabela</a></li>
-        <li><a href="/matches">Mecze</a></li>
-
-
-    </ul>
+    <div class="container-fluid">
+        <header class="bg-dark text-danger p-3">
+           
+        </header>
+    
     <h1>Lista drużyn</h1>
     <table>
         <tr>
@@ -56,5 +73,10 @@
         </tr>
         {% endfor %}
     </table>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

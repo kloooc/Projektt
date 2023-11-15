@@ -2,11 +2,10 @@
 <html>
 
 <head>
-    <title>Statystyki meczu</title>
+    <title>Analiza przedmeczowa</title>
     <!-- Dodanie Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-
 </head>
 
 <body>
@@ -33,7 +32,6 @@
             <header class="bg-dark text-danger p-3">
 
             </header>
-
             <div class="main-menu bg-light">
                 <ul class="nav container-fluid">
                     <li class="nav-item"><a class="nav-link-main text-dark"
@@ -45,29 +43,43 @@
                     </li>
                 </ul>
             </div>
-            <table class="table table-bordered">
-                <thead class="thead-dark">
-                    <tr>
-                        <th scope="col">{{ teamA }}</th>
-                        <th scope="col">Kategoria</th>
-                        <th scope="col">{{ teamB }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for stat in stats %}
-                    <tr>
-                        <td>{{ stat[1] }}</td>
-                        <td>{{ stat[0] }}</td>
-                        <td>{{ stat[2] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            {% if teamA and teamB %}
+
+
+            <p>Średnia liczba bramek drużyny {{ teamA }} z poprzednich meczy: {{ srednia_teamA|float|round(2) }}</p>
+            <p>Średnia liczba bramek drużyny {{ teamB }} z poprzednich meczy: {{ srednia_teamB|float|round(2) }}</p>
+    
+            <div class="container">
+                <div class="row">
+                    <h3>Prawdopodobieństwo strzelenia danej liczby bramek:</h3>
+                    <div class="col-md-6">
+                        <p>Dla drużyny {{ teamA }}:</p>
+                        <ul class="list-group">
+                            {% for k in range(4) %}
+                                <li class="list-group-item">{{ k }} bramki: {{ (prawdopodobienstwa_teamA[k] * 100)|float|round(2) }}%</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        
+                        <p>Dla drużyny {{ teamB }}:</p>
+                        <ul class="list-group">
+                            {% for k in range(4) %}
+                                <li class="list-group-item">{{ k }} bramki: {{ (prawdopodobienstwa_teamB[k] * 100)|float|round(2) }}%</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <p>Mecz o podanym ID nie istnieje.</p>
+        {% endif %}
         </div>
 
         <!-- Dodanie Bootstrap JS -->
         <script src="{{ url_for('static', filename='script.js') }}"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
 </body>
 
 </html>

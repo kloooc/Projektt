@@ -8,6 +8,7 @@
     <!-- Dodaj link do Bootstrapa -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 
 <body>
@@ -49,29 +50,33 @@
 
     <div class="container-fluid">
         <header class="bg-dark text-danger p-3">
-            <!-- Zawartość nagłówka -->
+           
         </header>
     
         <!-- Skorzystaj z klas Bootstrapa do zarządzania układem -->
         <div class="row">
             <div class="col-md-6 matches-container">
                 <h2>Nadchodzące mecze</h2>
-                <ul id="upcoming-list" class="">
+                <div class="row">
                     {% for match in upcoming_matches %}
-                    <li>
-                        {{ match[0] }}
-                        <br>
-                        <img src="{{ match[3] }}" alt="Logo drużyny" height="13em"> {{ match[1] }} -:- {{ match[2] }} <img
-                            src="{{ match[4] }}" alt="Logo drużyny" height="13em">
-                        <br>
-                    </li>
+                    <div class="col-md-12 mb-2">
+                        <div class="card" onclick="openStatsUM('{{ match[5] }}')">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ match[0] }}</h5>
+                                <p class="card-text text-center">
+                                    <img src="{{ match[3] }}" alt="Logo drużyny" height="30"> {{ match[1] }} -:- {{ match[2] }} <img
+                                        src="{{ match[4] }}" alt="Logo drużyny" height="30">
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                     {% endfor %}
-                </ul>
+                </div>
             </div>
     
-            <div class="col-md-6 table-container">
+            <div class="col-md-6 table-container" style="margin-right: 20px;">
                 <h2>Tabela</h2>
-                <table class="table table-bordered">
+                <table class="table" style="width: 99%;">
                     <thead class="thead-light">
                         <tr>
                             <th>ID</th>
@@ -120,12 +125,12 @@
             <!-- Dodaj kafelki z rozegranymi meczami -->
             {% for match in played_matches %}
             <div class="col-md-4">
-                <div class="card ">
+                <div class="card" onclick="openStats('{{ match[7] }}')">
                     <div class="card-body">
                         <h5 class="card-title">{{ match[0] }}</h5>
                         <p class="card-text text-center">
-                            <img src="{{ match[5] }}" alt="Logo drużyny" height="50"> {{ match[1] }}  {{ match[2] }} : {{ match[3] }} {{ match[4] }} <img
-                                src="{{ match[6] }}" alt="Logo drużyny" height="50">
+                            <img src="{{ match[5] }}" alt="Logo drużyny" height="30"> {{ match[1] }}  {{ match[2] }} : {{ match[3] }} {{ match[4] }} <img
+                                src="{{ match[6] }}" alt="Logo drużyny" height="30">
                         </p>
                     </div>
                 </div>
@@ -133,7 +138,7 @@
             {% endfor %}
         </div>
 
-
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

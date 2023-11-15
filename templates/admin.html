@@ -3,33 +3,7 @@
 
 <head>
     <title>Wyniki meczów</title>
-    <style>
-        /* Styl dla ukrywania zawartości listy */
-        .hidden {
-            display: none;
-        }
-    </style>
-    <script>
-        function openStatsUM(matchID, matchDate) {
-            console.log('Otwieram update.html dla matchID:', matchID);
-
-            var currentDate = new Date();
-            var day = matchDate.substring(0, 2); // Pobierz pierwsze dwa znaki
-            var month = matchDate.substring(3, 5); // Pobierz kolejne dwa znaki
-            var hour = matchDate.substring(7, 9); // Pobierz godzinę
-            var minute = matchDate.substring(10, 12); // Pobierz minutę
-
-
-            var matchDateTime = new Date(currentDate.getFullYear(), month - 1, day, hour, minute);
-            if (matchDateTime < currentDate) {
-                window.open('/update?matchID=' + matchID, 'update', 'width=600,height=400');
-            } else {
-                alert("Mecz jeszcze się nie odbył");
-            }
-
-
-        }
-    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
 
 <body>
@@ -37,7 +11,7 @@
     <h2 onclick="toggleList('upcoming-list')">Nadchodzące mecze</h2>
     <ul id="upcoming-list" class="">
         {% for match in upcoming_matches %}
-        <li onclick="openStatsUM('{{ match[5] }}','{{ match[0] }}' )">
+        <li onclick="openStatsUMA('{{ match[5] }}','{{ match[0] }}' )">
             {{ match[0] }}
             <br>
             <img src="{{ match[3] }}" alt="Logo drużyny" height="13em"> {{ match[1] }} -:- {{ match[2] }} <img
