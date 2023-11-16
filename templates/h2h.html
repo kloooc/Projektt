@@ -44,38 +44,18 @@
                     <li class="nav-item"><a class="nav-link-main text-dark" href="/teams">Skład</a></li>
                 </ul>
             </div>
-            {% if teamA and teamB %}
 
-
-            <p>Średnia liczba bramek drużyny {{ teamA }} z poprzednich meczy: {{ srednia_teamA|float|round(2) }}</p>
-            <p>Średnia liczba bramek drużyny {{ teamB }} z poprzednich meczy: {{ srednia_teamB|float|round(2) }}</p>
-    
-            <div class="container">
-                <div class="row">
-                    <h3>Prawdopodobieństwo strzelenia danej liczby bramek:</h3>
-                    <div class="col-md-6">
-                        <p>Dla drużyny {{ teamA }}:</p>
-                        <ul class="list-group">
-                            {% for k in range(4) %}
-                                <li class="list-group-item">{{ k }} bramki: {{ (prawdopodobienstwa_teamA[k] * 100)|float|round(2) }}%</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        
-                        <p>Dla drużyny {{ teamB }}:</p>
-                        <ul class="list-group">
-                            {% for k in range(4) %}
-                                <li class="list-group-item">{{ k }} bramki: {{ (prawdopodobienstwa_teamB[k] * 100)|float|round(2) }}%</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        {% else %}
-            <p>Mecz o podanym ID nie istnieje.</p>
-        {% endif %}
-        </div>
+            <ul id="played-list">
+                {% for match in played_matches %}
+                <li onclick="openStats('{{ match[7] }}')">
+                    {{ match[0] }}
+                    <br>
+                    <img src="{{ match[5] }}" alt="Logo drużyny" height="13em"> {{ match[1] }} {{ match[2] }}:{{ match[3] }} {{
+                    match[4] }} <img src="{{ match[6] }}" alt="Logo drużyny" height="13em">
+                    <br>
+                </li>
+                {% endfor %}
+            </ul>
         <!-- Dodanie Bootstrap JS -->
         <script src="{{ url_for('static', filename='script.js') }}"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

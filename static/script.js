@@ -41,3 +41,37 @@ function showStatsUM(matchID) {
 
     window.location.href = '/statsUP?matchID=' + matchID; // Przekierowanie do strony analizy meczu
 }
+function showH2H(matchID) {
+
+    window.location.href = '/h2h?matchID=' + matchID; // Przekierowanie do strony analizy meczu
+}
+
+function showHomeTable() {
+    var homeTable = document.getElementById("homeTable");
+    var awayTable = document.getElementById("awayTable");
+    var wholeTable = document.getElementById("wholeTable");
+
+    homeTable.style.display = "";
+    awayTable.style.display = "none";
+    wholeTable.style.display = "none";
+}
+
+function showAwayTable() {
+    var homeTable = document.getElementById("homeTable");
+    var awayTable = document.getElementById("awayTable");
+    var wholeTable = document.getElementById("wholeTable");
+
+    homeTable.style.display = "none";
+    awayTable.style.display = "";
+    wholeTable.style.display = "none";
+}
+
+function showWholeTable() {
+    var homeTable = document.getElementById("homeTable");
+    var awayTable = document.getElementById("awayTable");
+    var wholeTable = document.getElementById("wholeTable");
+
+    homeTable.style.display = "none";
+    awayTable.style.display = "none";
+    wholeTable.style.display = "";
+}

@@ -50,32 +50,30 @@
            
         </header>
     
+ 
+
+
+    <div class="container mt-4">
+    <h2 onclick="toggleList('played-list')">Rozegrane mecze</h2>
+    <ul id="played-list">
+        {% for match in played_matches %}
+        <li class="list-group-item d-flex justify-content-between align-items-center"
+         onclick="openStats('{{ match[7] }}')" style="cursor: pointer;">
+            <div class="d-flex flex-column">
+                <span>{{ match[0] }}</span> 
+                <span><img src="{{ match[5] }}" alt="Logo drużyny" height="25">    {{ match[1] }}</span>
+                <span><img src="{{ match[6] }}" alt="Logo drużyny" height="25">    {{ match[4] }}</span>
+            </div>
+            <div class="d-flex flex-column">
+                <span>&nbsp;</span> 
+                <span>{{ match[2] }}</span>
+                <span>{{ match[3] }}</span>
+            </div>
+        </li><br>
+        {% endfor %}
+    </ul>
+    </div>
     
-
-        <div class="container mt-4">
-            <h2 onclick="toggleList('upcoming-list')">Nadchodzące mecze</h2>
-            <ul id="upcoming-list">
-                {% for match in upcoming_matches %}
-                
-                <li class="list-group-item d-flex justify-content-between align-items-center"
-                onclick="openStatsUM('{{ match[5] }}')" style="cursor: pointer;">
-                <div class="d-flex flex-column">
-                    <span>{{ match[0] }}</span>
-                    <span><img src="{{ match[3] }}" alt="Logo drużyny" height="25">    {{ match[1] }}</span>
-                    <span><img src="{{ match[4] }}" alt="Logo drużyny" height="25">    {{ match[2] }}</span>
-                </div>
-                <div class="d-flex flex-column">
-                    <span>&nbsp;</span>
-                    <span>-</span>
-                    <span>-</span>
-                </div>
-            </li>
-                    <br>
-                {% endfor %}
-            </ul>
-        </div>
-
-
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

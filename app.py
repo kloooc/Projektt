@@ -177,11 +177,103 @@ def display_teams():
     GROUP BY
         t.id_team
     ORDER BY
-        Points DESC, Goal_Difference DESC
+        Points DESC, Goal_Difference DESC;
     """
 
     cursor.execute(query)
     teams = cursor.fetchall()
+
+    query = """
+    SELECT
+        t.id_team,
+        t.team AS Team_Name,
+        t.logo AS Team_Logo,
+        COUNT(CASE
+            WHEN (m.teamB_id = t.id_team AND m.scoreB > m.scoreA) THEN 1
+            ELSE NULL
+        END) AS Wins,
+        COUNT(CASE
+            WHEN (m.teamB_id = t.id_team AND m.scoreB = m.scoreA) THEN 1
+            ELSE NULL
+        END) AS Draws,
+        COUNT(CASE
+            WHEN (m.teamB_id = t.id_team AND m.scoreB < m.scoreA) THEN 1
+            ELSE NULL
+        END) AS Losses,
+        SUM(CASE
+            WHEN m.teamB_id = t.id_team THEN m.scoreB
+        END) AS Goals_Scored,
+        SUM(CASE
+            WHEN m.teamB_id = t.id_team THEN m.scoreA
+        END) AS Goals_Conceded,
+        SUM(CASE
+            WHEN (m.teamB_id = t.id_team AND m.scoreB > m.scoreA) THEN 3
+            WHEN (m.teamB_id = t.id_team AND m.scoreB = m.scoreA) THEN 1
+            ELSE 0
+        END) AS Points,
+        SUM(CASE
+            WHEN m.teamB_id = t.id_team THEN m.scoreB - m.scoreA
+        END) AS Goal_Difference
+    FROM
+        teams AS t
+    JOIN
+        matches AS m
+    ON
+        t.id_team = m.teamB_id 
+    GROUP BY
+        t.id_team
+    ORDER BY
+        Points DESC, Goal_Difference DESC;
+    """
+
+    cursor.execute(query)
+    teamsa = cursor.fetchall()
+
+    query = """
+    SELECT
+        t.id_team,
+        t.team AS Team_Name,
+        t.logo AS Team_Logo,
+        COUNT(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA > m.scoreB) THEN 1
+            ELSE NULL
+        END) AS Wins,
+        COUNT(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA = m.scoreB) THEN 1
+            ELSE NULL
+        END) AS Draws,
+        COUNT(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA < m.scoreB) THEN 1
+            ELSE NULL
+        END) AS Losses,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreA
+        END) AS Goals_Scored,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreB
+        END) AS Goals_Conceded,
+        SUM(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA > m.scoreB) THEN 3
+            WHEN (m.teamA_id = t.id_team AND m.scoreA = m.scoreB) THEN 1
+            ELSE 0
+        END) AS Points,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreA - m.scoreB
+        END) AS Goal_Difference
+    FROM
+        teams AS t
+    JOIN
+        matches AS m
+    ON
+        t.id_team = m.teamA_id 
+    GROUP BY
+        t.id_team
+    ORDER BY
+        Points DESC, Goal_Difference DESC;
+    """
+
+    cursor.execute(query)
+    teamsh = cursor.fetchall()
 
     # Zamknij połączenie z bazą danych
     conn.close()
@@ -192,7 +284,17 @@ def display_teams():
         team_with_new_id = (i,) + team[1:]
         teams_with_new_id.append(team_with_new_id)
 
-    return render_template('teams.html', teams=teams_with_new_id, user_type=user_type)
+    teams_with_new_ida = []
+    for i, team in enumerate(teamsa, start=1):
+        team_with_new_ida = (i,) + team[1:]
+        teams_with_new_ida.append(team_with_new_ida)
+    
+    teams_with_new_idh = []
+    for i, team in enumerate(teamsh, start=1):
+        team_with_new_ida = (i,) + team[1:]
+        teams_with_new_idh.append(team_with_new_ida)
+
+    return render_template('teams.html', teams=teams_with_new_id, user_type=user_type, teamsa=teams_with_new_ida, teamsh=teams_with_new_idh)
 
 @app.route('/matches')
 def show_matches():
@@ -219,17 +321,6 @@ def show_matches():
     upcoming_matches = cursor.fetchall()
 
 
-    # Pobierz mecze rozegrane
-    cursor.execute("""
-    SELECT matches.date, teamsA.team AS teamA, matches.scoreA, matches.scoreB, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
-    FROM matches
-    INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
-    INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
-    WHERE NOT (matches.scoreA IS NULL AND matches.scoreB IS NULL)
-    ORDER BY
-        matches.date DESC;  -- Sortowanie według daty malejąco
-    """)
-    played_matches = cursor.fetchall()
 
 
     
@@ -237,7 +328,7 @@ def show_matches():
     conn.close()
     
     # Przekaż dane do szablonu HTML i wyświetl go
-    return render_template('matches.html', upcoming_matches=upcoming_matches, played_matches=played_matches, user_type=user_type)
+    return render_template('matches.html', upcoming_matches=upcoming_matches, user_type=user_type)
 
 @app.route('/stats')
 def show_stats():
@@ -520,6 +611,99 @@ def show_prematch():
 
     conn.close()
     return render_template('prematch.html', teamA=teamA, teamB=teamB, logoA=logoA, logoB=logoB, srednia_teamA=srednia_teamA, match=match, srednia_teamB=srednia_teamB, prawdopodobienstwa_teamA=szanse_teamA, prawdopodobienstwa_teamB=szanse_teamB)
+    
+@app.route('/wyniki')
+def show_wyniki():
+    # Połącz się z bazą danych
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    user_type = session.get('user_type', 'guest')
+
+    
+         # Pobierz mecze rozegrane
+    cursor.execute("""
+    SELECT matches.date, teamsA.team AS teamA, matches.scoreA, matches.scoreB, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
+    FROM matches
+    INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
+    INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
+    WHERE NOT (matches.scoreA IS NULL AND matches.scoreB IS NULL)
+    ORDER BY
+        matches.date DESC;  -- Sortowanie według daty malejąco
+    """)
+    played_matches = cursor.fetchall()
+
+
+    
+    # Zamknij połączenie z bazą danych
+    conn.close()
+    
+    # Przekaż dane do szablonu HTML i wyświetl go
+    return render_template('wyniki.html', played_matches=played_matches, user_type=user_type)
+
+@app.route('/h2h')
+def show_H2H():
+    matchID = request.args.get('matchID')
+
+    if matchID is None:
+        print('Brak matchID w zapytaniu!')
+        # Możesz obsłużyć ten przypadek, np. przekierowując użytkownika gdzie indziej
+        return "Brak matchID"
+
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT distinct teamsA.team AS teamA, teamsB.team AS teamB FROM matches INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team WHERE matchID = ?", (matchID,))
+    result = cursor.fetchone()
+
+    if result is None:
+        print('Brak meczu o podanym matchID!')
+        # Możesz obsłużyć ten przypadek, np. przekierowując użytkownika gdzie indziej
+        return "Brak meczu o podanym matchID"
+
+    teamA, teamB = result
+
+    cursor.execute("SELECT date, scoreA, scoreB, matchID from matches where matchID=?",(matchID,))
+    match = cursor.fetchone()
+
+    cursor.execute("SELECT id_team FROM teams WHERE team = ?", (teamA,))
+    teamA_id = cursor.fetchone()[0]
+
+    cursor.execute("SELECT id_team FROM teams WHERE team = ?", (teamB,))
+    teamB_id = cursor.fetchone()[0]
+
+    cursor.execute("SELECT logo from teams where team=?", (teamA,))
+    logoA = cursor.fetchone()
+
+    cursor.execute("SELECT logo from teams where team=?", (teamB,))
+    logoB = cursor.fetchone()
+
+    cursor.execute("SELECT scoreA FROM matches WHERE teamA_id = ? AND scoreA IS NOT NULL", (teamA_id,))
+    scores_teamA = cursor.fetchall()
+
+    scores_teamA = [score[0] for score in scores_teamA if score[0] is not None]
+
+    print("Scores TeamA:", scores_teamA)
+
+    cursor.execute("SELECT scoreB FROM matches WHERE teamB_id = ? AND scoreB IS NOT NULL", (teamB_id,))
+    scores_teamB = cursor.fetchall()
+
+    scores_teamB = [score[0] for score in scores_teamB if score[0] is not None]
+
+    print("Scores TeamB:", scores_teamB)
+
+    cursor.execute("""
+    SELECT matches.date, teamsA.team AS teamA, matches.scoreA, matches.scoreB, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
+    FROM matches
+    INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
+    INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
+    WHERE (matches.teamA_id = ? AND matches.teamB_id = ?) OR (matches.teamA_id = ? AND matches.teamB_id = ?)
+    AND NOT (matches.scoreA IS NULL AND matches.scoreB IS NULL)
+    ORDER BY matches.date DESC;
+    """, (teamA_id, teamB_id, teamB_id, teamA_id))
+    played_matches = cursor.fetchall()
+
+    conn.close()
+    return render_template('h2h.html', teamA=teamA, teamB=teamB, logoA=logoA, match=match, logoB=logoB, played_matches=played_matches)
 
 if __name__ == '__main__':
     app.run(debug=True)

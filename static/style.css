@@ -1,13 +1,16 @@
 /* style.css */
-html, body {
+html,
+body {
     width: 100%;
     margin: 0;
     padding: 0;
 }
 
 .main-menu {
-    background-color: #f8f9fa; /* Kolor tła - jasny szary */
-    padding: 10px; /* Odstęp wewnętrzny */
+    background-color: #f8f9fa;
+    /* Kolor tła - jasny szary */
+    padding: 10px;
+    /* Odstęp wewnętrzny */
 }
 
 .nav {
@@ -23,25 +26,32 @@ html, body {
 }
 
 .nav-link-main {
-    color: #343a40 !important; /* Kolor tekstu - ciemny szary */
+    color: #343a40 !important;
+    /* Kolor tekstu - ciemny szary */
     text-decoration: none;
     padding: 10px;
     display: block;
 }
 
 .menu {
-    text-align: right; /* Wyrównaj do prawej strony */
-    margin-top: 20px; /* Dodaj margines na górze */
+    text-align: right;
+    /* Wyrównaj do prawej strony */
+    margin-top: 20px;
+    /* Dodaj margines na górze */
 }
 
 ul {
-    list-style-type: none; /* Usunięcie standardowych punktorów listy */
-    padding: 0; /* Usunięcie wewnętrznego marginesu listy */
+    list-style-type: none;
+    /* Usunięcie standardowych punktorów listy */
+    padding: 0;
+    /* Usunięcie wewnętrznego marginesu listy */
 }
 
 li {
-    display: inline; /* Elementy listy wyświetlane obok siebie, a nie jeden pod drugim */
-    margin-left: 20px; /* Odstęp między elementami listy */
+    display: inline;
+    /* Elementy listy wyświetlane obok siebie, a nie jeden pod drugim */
+    margin-left: 20px;
+    /* Odstęp między elementami listy */
 }
 
 .matches-container {
@@ -57,7 +67,8 @@ table {
     width: 100%;
 }
 
-th, td {
+th,
+td {
     border: 1px solid white;
     padding: 8px;
     text-align: left;
@@ -77,8 +88,30 @@ th {
 }
 
 img {
-    max-height: 50px; /* Maksymalna wysokość obrazka w tabeli */
+    max-height: 50px;
+    /* Maksymalna wysokość obrazka w tabeli */
 }
+
 .custom-padding {
     padding-top: 20px;
+}
+
+.center-btns {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+
+.btn-custom {
+    background-color: #f0f0f0;
+    color: #333;
+    border-color: #ccc;
+}
+
+.btn-custom:active,
+.btn-custom:focus {
+    background-color: #f0f0f0;
+    color: #333;
+    border-color: #ccc;
 }
