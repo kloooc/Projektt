@@ -22,20 +22,18 @@
                 </p>
             </div>
         </div>
-        {% endfor %}
+
 
         <header class="bg-dark text-danger p-3">
 
         </header>
         <div class="main-menu bg-light">
             <ul class="nav container-fluid">
-                <li class="nav-item"><a class="nav-link-main text-dark">Skład</a></li>
-                <li class="nav-item"><a class="nav-link-main text-dark" href="/teams">Wyniki</a></li>
-                <li class="nav-item">
-                    <a class="nav-link-main text-dark">Mecze</a>
-                </li>
-                </li>
+                <li class="nav-item"><a class="nav-link-main text-dark" onclick="openTeamsklad('{{ team[2] }}')">Skład</a></li>
+                <li class="nav-item"><a class="nav-link-main text-dark" onclick="openTeamWyniki('{{ team[2] }}')">Wyniki</a></li>
+                <li class="nav-item"><a class="nav-link-main text-dark" onclick="openTeamMatches('{{ team[2] }}')">Mecze</a></li>
             </ul>
+            {% endfor %}
         </div>
         <header class="bg-dark text-white font-weight-bold p-3 mt-4 mb-4">
             Bramkarze

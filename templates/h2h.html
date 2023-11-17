@@ -47,7 +47,7 @@
 
             <ul id="played-list">
                 {% for match in played_matches %}
-                <li onclick="openStats('{{ match[7] }}')">
+                <li>
                     {{ match[0] }}
                     <br>
                     <img src="{{ match[5] }}" alt="Logo drużyny" height="13em"> {{ match[1] }} {{ match[2] }}:{{ match[3] }} {{

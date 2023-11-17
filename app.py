@@ -275,23 +275,14 @@ def display_teams():
     # Zamknij połączenie z bazą danych
     conn.close()
 
-    # Przypisz nowe ID
-    teams_with_new_id = []
-    for i, team in enumerate(teams, start=1):
-        team_with_new_id = (i,) + team[1:]
-        teams_with_new_id.append(team_with_new_id)
+    #Utwórz listę indeksów
+    indexes = list(range(1, len(teams) + 1))
+    #Utwórz listę indeksów
+    indexesa = list(range(1, len(teamsa) + 1))
+    #Utwórz listę indeksów
+    indexesh = list(range(1, len(teamsh) + 1))
 
-    teams_with_new_ida = []
-    for i, team in enumerate(teamsa, start=1):
-        team_with_new_ida = (i,) + team[1:]
-        teams_with_new_ida.append(team_with_new_ida)
-    
-    teams_with_new_idh = []
-    for i, team in enumerate(teamsh, start=1):
-        team_with_new_ida = (i,) + team[1:]
-        teams_with_new_idh.append(team_with_new_ida)
-
-    return render_template('teams.html', teams=teams_with_new_id, user_type=user_type, teamsa=teams_with_new_ida, teamsh=teams_with_new_idh)
+    return render_template('teams.html', teams=teams, user_type=user_type, teamsa=teamsa, teamsh=teamsh, indexes=indexes,indexesa=indexesa, indexesh=indexesh)
 
 @app.route('/matches')
 def show_matches():
@@ -713,7 +704,7 @@ def show_team():
     conn = sqlite3.connect('football_teams.db')
     cursor = conn.cursor()
     
-    cursor.execute('SELECT logo, team FROM teams WHERE id_team = ?', (teamID,))
+    cursor.execute('SELECT logo, team, id_team FROM teams WHERE id_team = ?', (teamID,))
     team = cursor.fetchall()
 
     if not team:
@@ -866,5 +857,66 @@ GROUP BY
 
     return render_template('team.html', teams=team, bramkarze=bramkarze, obroncy=obroncy, pomocnicy=pomocnicy,napastnicy=napastnicy,trener=trener)
 
+@app.route('/team_matches')
+def show_teamMatches():
+    teamID = request.args.get('teamID')
+
+    if teamID is None:
+        print('Brak teamID w zapytaniu!')
+        return "Brak teamID"
+
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT logo, team, id_team FROM teams WHERE id_team = ?', (teamID,))
+    team = cursor.fetchall()
+
+    if not team:
+        print('Brak teamu o podanym teamID!')
+        return "Brak meczu o podanym teamID"
+    
+    cursor.execute("""
+    SELECT matches.date, teamsA.team AS teamA, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
+    FROM matches
+    INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
+    INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
+    WHERE matches.scoreA IS NULL AND matches.scoreB IS NULL AND (matches.teamA_id = ? or matches.teamB_id=?)
+    ORDER BY
+        matches.date;
+    """, (teamID, teamID))
+    upcoming_matches = cursor.fetchall()
+
+    return render_template('team_matches.html', teams=team, upcoming_matches=upcoming_matches)
+
+@app.route('/team_wyniki')
+def show_teamWyniki():
+    teamID = request.args.get('teamID')
+
+    if teamID is None:
+        print('Brak teamID w zapytaniu!')
+        return "Brak teamID"
+
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT logo, team, id_team FROM teams WHERE id_team = ?', (teamID,))
+    team = cursor.fetchall()
+
+    if not team:
+        print('Brak teamu o podanym teamID!')
+        return "Brak meczu o podanym teamID"
+    
+    cursor.execute("""
+    SELECT matches.date, teamsA.team AS teamA, matches.scoreA, matches.scoreB, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
+    FROM matches
+    INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
+    INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
+    WHERE NOT (matches.scoreA IS NULL AND matches.scoreB IS NULL) AND (matches.teamA_id = ? or matches.teamB_id=?)
+    ORDER BY
+        matches.date;
+    """, (teamID, teamID))
+    played_matches = cursor.fetchall()
+
+    return render_template('team_wyniki.html', teams=team, played_matches=played_matches)
 if __name__ == '__main__':
     app.run(debug=True)

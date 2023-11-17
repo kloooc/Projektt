@@ -8,7 +8,7 @@ cursor = conn.cursor()
 cursor.execute("DROP INDEX IF EXISTS idx_unique_match_players")
 conn.commit()
 # Usunięcie rekordów dla konkretnego player_id
-player_id_to_delete = 1
+player_id_to_delete = 42
 cursor.execute("DELETE FROM match_players WHERE player_id = ?", (player_id_to_delete,))
 conn.commit()
 

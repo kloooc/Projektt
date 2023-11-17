@@ -36,6 +36,16 @@ function openTeam(teamID) {
     window.open('/team?teamID=' + teamID, 'team', 'width=800,height=800');
 }
 
+function openTeamMatches(teamID) {
+    window.location.href = '/team_matches?teamID=' + teamID;
+}
+function openTeamWyniki(teamID) {
+    window.location.href = '/team_wyniki?teamID=' + teamID;
+}
+function openTeamsklad(teamID) {
+    window.location.href = '/team?teamID=' + teamID;
+}
+
 function showMatchAnalysis(matchID) {
 
     window.location.href = '/prematch?matchID=' + matchID; // Przekierowanie do strony analizy meczu

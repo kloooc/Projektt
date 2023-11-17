@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Team</title>
+    <!-- Dodanie Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+
+
+        {% for team in teams %}
+
+        <!-- Karty z informacjami o meczach -->
+        <div class="card">
+            <div class="card-body">
+                <p class="card-text text-center">
+                    <img src="{{ team[0] }}" height="50"> {{ team[1] }}
+                </p>
+            </div>
+        </div>
+
+        <header class="bg-dark text-danger p-3">
+
+        </header>
+        <div class="main-menu bg-light">
+            <ul class="nav container-fluid">
+                <li class="nav-item"><a class="nav-link-main text-dark" onclick="openTeamsklad('{{ team[2] }}')">Skład</a></li>
+                <li class="nav-item"><a class="nav-link-main text-dark" onclick="openTeamWyniki('{{ team[2] }}')">Wyniki</a></li>
+                <li class="nav-item"><a class="nav-link-main text-dark" onclick="openTeamMatches('{{ team[2] }}')">Mecze</a></li>
+            </ul>
+            {% endfor %}
+        </div>
+
+        <div class="container mt-4">
+            <h2 onclick="toggleList('upcoming-list')">Nadchodzące mecze</h2>
+            <ul id="upcoming-list">
+                {% for match in upcoming_matches %}
+                
+                <li class="list-group-item d-flex justify-content-between align-items-center"
+                onclick="openStatsUM('{{ match[5] }}')" style="cursor: pointer;">
+                <div class="d-flex flex-column">
+                    <span>{{ match[0] }}</span>
+                    <span><img src="{{ match[3] }}" alt="Logo drużyny" height="25">    {{ match[1] }}</span>
+                    <span><img src="{{ match[4] }}" alt="Logo drużyny" height="25">    {{ match[2] }}</span>
+                </div>
+                <div class="d-flex flex-column">
+                    <span>&nbsp;</span>
+                    <span>-</span>
+                    <span>-</span>
+                </div>
+            </li>
+                    <br>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Dodanie Bootstrap JS -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+
+</html>
