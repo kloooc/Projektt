@@ -29,8 +29,11 @@ function openStats(matchID) {
 }
 
 function openStatsUM(matchID) {
-    console.log('Otwieram statsUP.html dla matchID:', matchID);
     window.open('/statsUP?matchID=' + matchID, 'StatsUP', 'width=800,height=800');
+}
+
+function openTeam(teamID) {
+    window.open('/team?teamID=' + teamID, 'team', 'width=800,height=800');
 }
 
 function showMatchAnalysis(matchID) {

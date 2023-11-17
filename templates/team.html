@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Team</title>
+    <!-- Dodanie Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+
+
+        {% for team in teams %}
+
+        <!-- Karty z informacjami o meczach -->
+        <div class="card">
+            <div class="card-body">
+                <p class="card-text text-center">
+                    <img src="{{ team[0] }}" height="50"> {{ team[1] }}
+                </p>
+            </div>
+        </div>
+        {% endfor %}
+
+        <header class="bg-dark text-danger p-3">
+
+        </header>
+        <div class="main-menu bg-light">
+            <ul class="nav container-fluid">
+                <li class="nav-item"><a class="nav-link-main text-dark">Skład</a></li>
+                <li class="nav-item"><a class="nav-link-main text-dark" href="/teams">Wyniki</a></li>
+                <li class="nav-item">
+                    <a class="nav-link-main text-dark">Mecze</a>
+                </li>
+                </li>
+            </ul>
+        </div>
+        <header class="bg-dark text-white font-weight-bold p-3 mt-4 mb-4">
+            Bramkarze
+        </header>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Player Name</th>
+                                <th>Total Time Played</th>
+                                <th>Total Goals</th>
+                                <th>Total Assists</th>
+                                <th>Total Yellow Cards</th>
+                                <th>Total Red Cards</th>
+                                <th>Matches Played</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in bramkarze %}
+                                <tr>
+                                    <td>{{ row[1] }}</td>
+                                    <td>{{ row[3] }}</td>
+                                    <td>{{ row[4] }}</td>
+                                    <td>{{ row[5] }}</td>
+                                    <td>{{ row[6] }}</td>
+                                    <td>{{ row[7] }}</td>
+                                    <td>{{ row[8] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            </div>
+        <header class="bg-dark text-white font-weight-bold p-3 mt-4 mb-4">
+            Obrońcy
+        </header>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Player Name</th>
+                                <th>Total Time Played</th>
+                                <th>Total Goals</th>
+                                <th>Total Assists</th>
+                                <th>Total Yellow Cards</th>
+                                <th>Total Red Cards</th>
+                                <th>Matches Played</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in obroncy %}
+                                <tr>
+                                    <td>{{ row[1] }}</td>
+                                    <td>{{ row[3] }}</td>
+                                    <td>{{ row[4] }}</td>
+                                    <td>{{ row[5] }}</td>
+                                    <td>{{ row[6] }}</td>
+                                    <td>{{ row[7] }}</td>
+                                    <td>{{ row[8] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            </div>
+        <header class="bg-dark text-white font-weight-bold p-3 mt-4 mb-4">
+            Pomocnicy
+        </header>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Player Name</th>
+                                <th>Total Time Played</th>
+                                <th>Total Goals</th>
+                                <th>Total Assists</th>
+                                <th>Total Yellow Cards</th>
+                                <th>Total Red Cards</th>
+                                <th>Matches Played</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in pomocnicy %}
+                                <tr>
+                                    <td>{{ row[1] }}</td>
+                                    <td>{{ row[3] }}</td>
+                                    <td>{{ row[4] }}</td>
+                                    <td>{{ row[5] }}</td>
+                                    <td>{{ row[6] }}</td>
+                                    <td>{{ row[7] }}</td>
+                                    <td>{{ row[8] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            </div>
+        <header class="bg-dark text-white font-weight-bold p-3 mt-4 mb-4">
+            Napastnicy
+        </header>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Player Name</th>
+                                <th>Total Time Played</th>
+                                <th>Total Goals</th>
+                                <th>Total Assists</th>
+                                <th>Total Yellow Cards</th>
+                                <th>Total Red Cards</th>
+                                <th>Matches Played</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in napastnicy %}
+                                <tr>
+                                    <td>{{ row[1] }}</td>
+                                    <td>{{ row[3] }}</td>
+                                    <td>{{ row[4] }}</td>
+                                    <td>{{ row[5] }}</td>
+                                    <td>{{ row[6] }}</td>
+                                    <td>{{ row[7] }}</td>
+                                    <td>{{ row[8] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            </div>
+        <header class="bg-dark text-white font-weight-bold p-3 mt-4 mb-4">
+            Trener
+        </header>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Player Name</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in trener %}
+                                <tr>
+                                    <td>{{ row[1] }}</td>
+
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            </div>
+
+
+    </div>
+
+    <!-- Dodanie Bootstrap JS -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+
+</html>

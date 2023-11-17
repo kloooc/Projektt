@@ -119,13 +119,10 @@ def show_main():
     # Zamknij połączenie z bazą danych
     conn.close()
 
-    # Przypisz nowe ID
-    teams_with_new_id = []
-    for i, team in enumerate(teams, start=1):
-        team_with_new_id = (i,) + team[1:]
-        teams_with_new_id.append(team_with_new_id)
+    # Utwórz listę indeksów
+    indexes = list(range(1, len(teams) + 1))
 
-    return render_template('main.html', user_type=user_type, teams=teams_with_new_id, upcoming_matches=upcoming_matches, played_matches=played_matches)
+    return render_template('main.html', user_type=user_type, teams=teams, indexes=indexes, upcoming_matches=upcoming_matches, played_matches=played_matches)
 
 @app.route('/teams')
 def display_teams():
@@ -704,6 +701,170 @@ def show_H2H():
 
     conn.close()
     return render_template('h2h.html', teamA=teamA, teamB=teamB, logoA=logoA, match=match, logoB=logoB, played_matches=played_matches)
+
+@app.route('/team')
+def show_team():
+    teamID = request.args.get('teamID')
+
+    if teamID is None:
+        print('Brak teamID w zapytaniu!')
+        return "Brak teamID"
+
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT logo, team FROM teams WHERE id_team = ?', (teamID,))
+    team = cursor.fetchall()
+
+    if not team:
+        print('Brak teamu o podanym teamID!')
+        return "Brak meczu o podanym teamID"
+    
+    cursor.execute('''
+    SELECT
+    players.player_id,
+    players.full_name,
+    teams.team,
+    SUM(match_players.time_played) AS total_time_played,
+    SUM(match_players.goals) AS total_goals,
+    SUM(match_players.assists) AS total_assists,
+    SUM(match_players.yellow_card) AS total_yellow_cards,
+    SUM(match_players.red_card) AS total_red_cards,
+    COUNT(CASE WHEN match_players.time_played > 0 THEN match_players.matchid END) AS matches_played
+FROM
+    players
+JOIN
+    teams_players ON players.player_id = teams_players.player_id
+JOIN
+    teams ON teams_players.id_team = teams.id_team
+JOIN
+    player_positions ON players.player_id = player_positions.player_id
+LEFT JOIN
+    match_players ON players.player_id = match_players.player_id
+WHERE
+    player_positions.position_id = 1 AND teams.id_team = ?
+GROUP BY
+    players.player_id, teams.team;
+''', (teamID,))
+    bramkarze = cursor.fetchall()
+
+    cursor.execute('''
+    SELECT
+    players.player_id,
+    players.full_name,
+    teams.team,
+    SUM(match_players.time_played) AS total_time_played,
+    SUM(match_players.goals) AS total_goals,
+    SUM(match_players.assists) AS total_assists,
+    SUM(match_players.yellow_card) AS total_yellow_cards,
+    SUM(match_players.red_card) AS total_red_cards,
+    COUNT(CASE WHEN match_players.time_played > 0 THEN match_players.matchid END) AS matches_played
+FROM
+    players
+JOIN
+    teams_players ON players.player_id = teams_players.player_id
+JOIN
+    teams ON teams_players.id_team = teams.id_team
+JOIN
+    player_positions ON players.player_id = player_positions.player_id
+LEFT JOIN
+    match_players ON players.player_id = match_players.player_id
+WHERE
+    player_positions.position_id = 2 AND teams.id_team = ?
+GROUP BY
+    players.player_id, teams.team;
+''', (teamID,))
+    obroncy = cursor.fetchall()
+
+    cursor.execute('''
+    SELECT
+    players.player_id,
+    players.full_name,
+    teams.team,
+    SUM(match_players.time_played) AS total_time_played,
+    SUM(match_players.goals) AS total_goals,
+    SUM(match_players.assists) AS total_assists,
+    SUM(match_players.yellow_card) AS total_yellow_cards,
+    SUM(match_players.red_card) AS total_red_cards,
+    COUNT(CASE WHEN match_players.time_played > 0 THEN match_players.matchid END) AS matches_played
+FROM
+    players
+JOIN
+    teams_players ON players.player_id = teams_players.player_id
+JOIN
+    teams ON teams_players.id_team = teams.id_team
+JOIN
+    player_positions ON players.player_id = player_positions.player_id
+LEFT JOIN
+    match_players ON players.player_id = match_players.player_id
+WHERE
+    player_positions.position_id = 3 AND teams.id_team = ?
+GROUP BY
+    players.player_id, teams.team;
+''', (teamID,))
+    pomocnicy = cursor.fetchall()
+
+    cursor.execute('''
+    SELECT
+    players.player_id,
+    players.full_name,
+    teams.team,
+    SUM(match_players.time_played) AS total_time_played,
+    SUM(match_players.goals) AS total_goals,
+    SUM(match_players.assists) AS total_assists,
+    SUM(match_players.yellow_card) AS total_yellow_cards,
+    SUM(match_players.red_card) AS total_red_cards,
+    COUNT(CASE WHEN match_players.time_played > 0 THEN match_players.matchid END) AS matches_played
+FROM
+    players
+JOIN
+    teams_players ON players.player_id = teams_players.player_id
+JOIN
+    teams ON teams_players.id_team = teams.id_team
+JOIN
+    player_positions ON players.player_id = player_positions.player_id
+LEFT JOIN
+    match_players ON players.player_id = match_players.player_id
+WHERE
+    player_positions.position_id = 4 AND teams.id_team = ?
+GROUP BY
+    players.player_id, teams.team;
+''', (teamID,))
+
+    napastnicy = cursor.fetchall()
+
+    cursor.execute('''
+    SELECT
+        players.player_id,
+        players.full_name,
+        teams.team,
+        SUM(match_players.time_played) AS total_time_played,
+        SUM(match_players.goals) AS total_goals,
+        SUM(match_players.assists) AS total_assists,
+        SUM(match_players.yellow_card) AS total_yellow_cards,
+        SUM(match_players.red_card) AS total_red_cards,
+        COUNT(CASE WHEN match_players.time_played > 0 THEN match_players.matchid END) AS matches_played
+    FROM
+        players
+    JOIN
+        teams_players ON players.player_id = teams_players.player_id
+    JOIN
+        teams ON teams_players.id_team = teams.id_team
+    JOIN
+        player_positions ON players.player_id = player_positions.player_id
+    LEFT JOIN
+        match_players ON players.player_id = match_players.player_id
+    WHERE
+        player_positions.position_id = 5 AND teams.id_team = ?
+    GROUP BY
+        players.player_id, teams.team;
+''', (teamID,))
+
+    trener = cursor.fetchall()
+
+    conn.close()
+
+    return render_template('team.html', teams=team, bramkarze=bramkarze, obroncy=obroncy, pomocnicy=pomocnicy,napastnicy=napastnicy,trener=trener)
 
 if __name__ == '__main__':
     app.run(debug=True)
