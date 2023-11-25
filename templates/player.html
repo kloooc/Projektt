@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Player Details</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    
+    <div class="container">
+        <div class="card">
+            <div class="card-body">
+                <p class="card-text text-center">
+                    <img onclick="openTeam('{{ player[1] }}')" src="{{ player[2] }}" height="30"> {{ player[0] }}
+                </p>
+            </div>
+        </div>
+        <header class="bg-dark text-danger p-3">
+
+        </header>
+        <div class="row">
+            <div class="container mt-4">
+                <div class="center-btns">
+                    <button class="btn btn-custom me-2" onclick="showHomeTable()">Statystyki</button>
+                    <button class="btn btn-custom me-2" onclick="showAwayTable()">Forma</button>
+                    <button class="btn btn-custom" onclick="showWholeTable()">Porównanie</button>
+                </div>
+        </div>
+        
+            <div class="col-md-12 mb-4" id="homeTable">
+                <header class="bg-dark text-danger p-3">
+
+                </header>
+            {% for match in matches_and_players %}
+            <div class="col-md-12" >
+               
+                <div class="card mb-3">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="small">{{ match[7] }}</p>
+                            <div class="d-flex align-items-center">
+                                <img src="{{ match[3] }}" alt="Logo drużyny" height="25"> &nbsp; {{ match[1] }} {{ match[5] }} : {{ match[6] }} {{ match[2] }} &nbsp; <img src="{{ match[4] }}" alt="Logo drużyny" height="25">
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <table class="table table-borderless">
+                                <thead>
+                                    <tr>
+                                        <th>TP</th>
+                                        <th>G</th>
+                                        <th>A</th>
+                                        <th>Y</th>
+                                        <th>R</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>{{ match[9] }}</td>
+                                        <td>{{ match[10] }}</td>
+                                        <td>{{ match[11] }}</td>
+                                        <td>{{ match[12] }}</td>
+                                        <td>{{ match[13] }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="col-md-12 mb-4" id="awayTable" style="display: none;">
+             
+            {% for match in matches_and_players %}
+            <div class="col-md-12" >
+               
+                <div class="card mb-3">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="small">{{ match[7] }}</p>
+                            <div class="d-flex align-items-center">
+                                <img src="{{ match[3] }}" alt="Logo drużyny" height="25"> &nbsp; {{ match[1] }} {{ match[5] }} : {{ match[6] }} {{ match[2] }} &nbsp; <img src="{{ match[4] }}" alt="Logo drużyny" height="25">
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <table class="table table-borderless">
+                                <thead>
+                                    <tr>
+                                        <th>TP</th>
+                                        <th>G</th>
+                                        <th>A</th>
+                                        <th>Y</th>
+                                        <th>R</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>{{ match[9] }}</td>
+                                        <td>{{ match[10] }}</td>
+                                        <td>{{ match[11] }}</td>
+                                        <td>{{ match[12] }}</td>
+                                        <td>{{ match[13] }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Dodanie Bootstrap JS -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+
+</html>

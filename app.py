@@ -918,5 +918,47 @@ def show_teamWyniki():
     played_matches = cursor.fetchall()
 
     return render_template('team_wyniki.html', teams=team, played_matches=played_matches)
+
+@app.route('/player')
+def show_player():
+    playerID = request.args.get('playerID')
+
+    if playerID is None:
+        print('Brak playerID w zapytaniu!')
+        return "Brak playerID"
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+
+    query = '''
+    SELECT m.matchID, t1.team AS teamA_name, t2.team AS teamB_name, t1.logo AS teamA_logo, t2.logo AS teamB_logo,
+           m.ScoreA, m.ScoreB, m.date,
+           mp.player_id, mp.time_played, mp.goals, mp.assists, mp.yellow_card, mp.red_card,
+           p.full_name
+    FROM matches AS m
+    JOIN match_players AS mp ON m.matchID = mp.matchID
+    JOIN players as p ON mp.player_id = p.player_id
+    JOIN teams AS t1 ON m.teamA_id = t1.id_team
+    JOIN teams AS t2 ON m.teamB_id = t2.id_team
+    WHERE m.ScoreA IS NOT NULL AND m.ScoreB IS NOT NULL AND mp.player_id = ?
+'''
+
+# Wykonaj zapytanie z parametrem player_id
+    cursor.execute(query, (playerID,))
+
+# Pobierz wyniki zapytania
+    matches_and_players = cursor.fetchall()
+    
+
+    query = '''
+    SELECT p.full_name, t.id_team, t.logo
+    FROM players AS p
+    JOIN teams_players AS tp ON p.player_id = tp.player_id
+    JOIN teams AS t ON tp.id_team = t.id_team
+    Where p.player_id = ?
+'''
+    cursor.execute(query, (playerID,))
+    player = cursor.fetchone()
+    return render_template('player.html',matches_and_players=matches_and_players, player=player)
+
 if __name__ == '__main__':
     app.run(debug=True)

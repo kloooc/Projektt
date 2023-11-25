@@ -59,6 +59,11 @@ function showH2H(matchID) {
     window.location.href = '/h2h?matchID=' + matchID; // Przekierowanie do strony analizy meczu
 }
 
+function showPlayer(playerID) {
+
+    window.location.href = '/player?playerID=' + playerID; // Przekierowanie do strony analizy meczu
+}
+
 function showHomeTable() {
     var homeTable = document.getElementById("homeTable");
     var awayTable = document.getElementById("awayTable");
@@ -88,3 +93,4 @@ function showWholeTable() {
     awayTable.style.display = "none";
     wholeTable.style.display = "";
 }
+

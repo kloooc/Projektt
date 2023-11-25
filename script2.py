@@ -9,7 +9,7 @@ import sys
 driver = webdriver.Chrome()
 
 # Otwarcie strony z wynikami
-driver.get("https://www.flashscore.pl/mecz/boyXTEjg/#/szczegoly-meczu/szczegoly-meczu")
+driver.get("https://www.flashscore.pl/mecz/OM7STT8q/#/szczegoly-meczu")
 
 # Poczekaj, aż strona się załaduje (możesz dostosować czas)
 driver.implicitly_wait(10)
@@ -34,14 +34,11 @@ for date_div in date_divs:
     date_text = date_div.text.strip()
     print("Oryginalny tekst daty:", date_text)
 
-    try:
-        # Pobierz nową datę i godzinę z tekstu
-        new_date_obj = datetime.datetime.strptime(date_text, "%d.%m.%Y %H:%M")
-        print("Przekształcona data:", new_date_obj)
-    except ValueError as e:
-        print("Błąd konwersji daty:", e)
 
-    # Tutaj zaczynają się zapytania SQL
+    # Pobierz nową datę i godzinę z tekstu
+    new_date_obj = datetime.datetime.strptime(date_text, "%d.%m.%Y %H:%M")
+    print("Przekształcona data:", new_date_obj)
+
     teams = []
 
     participant_divs = soup.find_all('div', class_='participant__participantName participant__overflow')
