@@ -1,5 +1,7 @@
 
+import base64
 import hashlib
+import io
 import signal
 import sys
 from flask import Flask, render_template, request, redirect, url_for, session
@@ -9,6 +11,8 @@ from flask_session import Session
 import math
 from math import exp
 import atexit
+
+from matplotlib import pyplot as plt
 
 # Rejestracja funkcji do wywołania przed zakończeniem programu
 atexit.register(lambda: session.clear())
@@ -919,7 +923,7 @@ def show_teamWyniki():
 
     return render_template('team_wyniki.html', teams=team, played_matches=played_matches)
 
-@app.route('/player')
+@app.route('/player', methods=['GET', 'POST'])
 def show_player():
     playerID = request.args.get('playerID')
 
@@ -929,6 +933,15 @@ def show_player():
     conn = sqlite3.connect('football_teams.db')
     cursor = conn.cursor()
 
+    query = '''
+    SELECT player_id
+    FROM players 
+    WHERE player_id = ?
+'''
+
+# Wykonaj zapytanie z parametrem player_id
+    cursor.execute(query, (playerID,))
+    playera = cursor.fetchone() 
     query = '''
     SELECT m.matchID, t1.team AS teamA_name, t2.team AS teamB_name, t1.logo AS teamA_logo, t2.logo AS teamB_logo,
            m.ScoreA, m.ScoreB, m.date,
@@ -958,7 +971,217 @@ def show_player():
 '''
     cursor.execute(query, (playerID,))
     player = cursor.fetchone()
-    return render_template('player.html',matches_and_players=matches_and_players, player=player)
+
+    query = '''
+    SELECT
+        players.player_id,
+        players.full_name,
+        match_players.time_played,
+        match_players.matchid, match_players.goals, match_players.assists, match_players.yellow_card, match_players.red_card
+    FROM
+        players
+    LEFT JOIN
+        match_players ON players.player_id = match_players.player_id
+    WHERE players.player_id = ?
+    Order by match_players.matchid asc
+'''
+
+# Wykonanie zapytania z parametrem playerID
+    cursor.execute(query, (playerID,))
+    results = cursor.fetchall()  # Pobranie wszystkich wierszy wyniku
+
+# Sprawdzenie czy wyniki nie są puste
+    if results:
+        match_ids = [row[3] for row in results]  # Pobranie wszystkich numerów meczów
+        unique_match_ids = sorted(set(match_ids))  # Utworzenie unikalnej listy numerów meczów
+        match_number_dict = {match_id: index + 1 for index, match_id in enumerate(unique_match_ids)}  # Słownik przypisujący numerom meczów ich kolejne wartości
+
+    # Wyświetlenie wyników z numerami meczów od 1 do x
+        for row in results:
+            match_id = row[3]
+            match_number = match_number_dict[match_id]
+    else:
+        print("Brak danych dla tego gracza")
+
+    match_numbers = []
+    total_time_played = []
+
+    for row in results:
+        match_id = row[3]
+        match_number = match_number_dict[match_id]
+        match_numbers.append(match_number)
+        total_time_played.append(row[2])
+    plt.figure(figsize=(8, 6))  # Ustalenie rozmiaru wykresu
+    plt.plot(match_numbers, total_time_played, linestyle='-')  # Wygenerowanie wykresu
+    plt.title('Czas gry w poszczególnych meczach')  # Tytuł wykresu
+    plt.xlabel('Numer meczu')  # Oś X
+    plt.ylabel('Czas gry')  # Oś Y
+    plt.grid(True)  # Dodanie siatki
+
+ # Zapisanie wygenerowanego wykresu do pamięci jako strumień binarny
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+
+    time_played = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    plt.figure(figsize=(8, 6))
+
+    plt.scatter(match_numbers, [row[4] for row in results], label='Goals', color='blue')
+    plt.scatter(match_numbers, [row[5] for row in results], label='Assists', color='green')
+    plt.scatter(match_numbers, [row[6] for row in results], label='Yellow Cards', color='yellow')
+
+
+    plt.title('Statystyki meczowe')
+    plt.xlabel('Numer meczu')
+    plt.ylabel('Wartość')
+    plt.legend()
+    plt.grid(True)
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+
+    statistics = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    query = '''
+    SELECT distinct teams.id_team, teams.team
+    FROM teams
+    JOIN matches ON teams.id_team = matches.teamA_id
+    WHERE matches.date > '2023-07-01'
+    Order by teams.id_team asc;
+    '''
+    cursor.execute(query)
+    teams = cursor.fetchall()
+
+
+
+    return render_template('player.html', matches_and_players=matches_and_players, player=player, playera=playera, statistics=statistics, time_played=time_played, teams=teams)
+
+@app.route('/playerform', methods=['GET', 'POST'])
+def show_playerForm():
+    playerID = request.args.get('playerID')
+
+    if playerID is None:
+        print('Brak playerID w zapytaniu!')
+        return "Brak playerID"
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+
+    query = '''
+    SELECT player_id
+    FROM players 
+    WHERE player_id = ?
+'''
+
+# Wykonaj zapytanie z parametrem player_id
+    cursor.execute(query, (playerID,))
+    playera = cursor.fetchone() 
+
+    query = '''
+    SELECT p.full_name, t.id_team, t.logo
+    FROM players AS p
+    JOIN teams_players AS tp ON p.player_id = tp.player_id
+    JOIN teams AS t ON tp.id_team = t.id_team
+    Where p.player_id = ?
+'''
+    cursor.execute(query, (playerID,))
+    player = cursor.fetchone()
+
+    query = '''
+    SELECT
+        players.player_id,
+        players.full_name,
+        match_players.time_played,
+        match_players.matchid, match_players.goals, match_players.assists, match_players.yellow_card, match_players.red_card
+    FROM
+        players
+    LEFT JOIN
+        match_players ON players.player_id = match_players.player_id
+    WHERE players.player_id = ?
+    Order by match_players.matchid asc
+'''
+
+# Wykonanie zapytania z parametrem playerID
+    cursor.execute(query, (playerID,))
+    results = cursor.fetchall()  # Pobranie wszystkich wierszy wyniku
+
+# Sprawdzenie czy wyniki nie są puste
+    if results:
+        match_ids = [row[3] for row in results]  # Pobranie wszystkich numerów meczów
+        unique_match_ids = sorted(set(match_ids))  # Utworzenie unikalnej listy numerów meczów
+        match_number_dict = {match_id: index + 1 for index, match_id in enumerate(unique_match_ids)}  # Słownik przypisujący numerom meczów ich kolejne wartości
+
+    # Wyświetlenie wyników z numerami meczów od 1 do x
+        for row in results:
+            match_id = row[3]
+            match_number = match_number_dict[match_id]
+    else:
+        print("Brak danych dla tego gracza")
+
+
+    match_numbers = []
+
+
+    for row in results:
+        match_id = row[3]
+        match_number = match_number_dict[match_id]
+        match_numbers.append(match_number)
+        
+
+    total_time_played = []  # Lista przechowująca sumę czasu gry dla każdego meczu
+    cumulative_time = 0  # Inicjalizacja zmiennej przechowującej sumę czasu gry
+
+    for row in results:
+        time_played = row[2]  # Zmienna przechowująca czas gry z bazy danych (wynik z kolumny match_players.time_played)
+        cumulative_time += time_played  # Dodaj czas gry do sumy czasu gry
+        total_time_played.append(cumulative_time)  # Dodaj sumę czasu gry do listy
+
+    # Wygenerowanie wykresu
+    plt.figure(figsize=(8, 6))
+    plt.plot(match_numbers, total_time_played, linestyle='-')
+    plt.title('Czas gry w poszczególnych meczach')
+    plt.xlabel('Numer meczu')
+    plt.ylabel('Suma minut możliwych do rozegrania')
+    plt.grid(True)
+
+ # Zapisanie wygenerowanego wykresu do pamięci jako strumień binarny
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+
+    time_played = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    plt.figure(figsize=(8, 6))
+
+    plt.scatter(match_numbers, [row[4] for row in results], label='Goals', color='blue')
+    plt.scatter(match_numbers, [row[5] for row in results], label='Assists', color='green')
+    plt.scatter(match_numbers, [row[6] for row in results], label='Yellow Cards', color='yellow')
+
+
+    plt.title('Statystyki meczowe')
+    plt.xlabel('Numer meczu')
+    plt.ylabel('Wartość')
+    plt.legend()
+    plt.grid(True)
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+
+    statistics = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    query = '''
+    SELECT distinct teams.id_team, teams.team
+    FROM teams
+    JOIN matches ON teams.id_team = matches.teamA_id
+    WHERE matches.date > '2023-07-01'
+    Order by teams.id_team asc;
+    '''
+    cursor.execute(query)
+    teams = cursor.fetchall()
+
+    return render_template('playerform.html', player=player, playera=playera, statistics=statistics, time_played=time_played, teams=teams)
 
 if __name__ == '__main__':
     app.run(debug=True)

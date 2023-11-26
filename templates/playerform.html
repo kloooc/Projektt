@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Player Details</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-body">
+                <p class="card-text text-center">
+                    <img onclick="openTeam('{{ player[1] }}')" src="{{ player[2] }}" height="30"> {{ player[0] }}
+                </p>
+            </div>
+        </div>
+        <header class="bg-dark text-danger p-3">
+
+        </header>
+        <div class="main-menu bg-light">
+            <ul class="nav container-fluid">
+                <li class="nav-item">
+                    <a class="nav-link-main text-dark" onclick="showPlayer('{{playera[0]}}')">Statystyki</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link-main text-dark" onclick="showPlayerForm('{{playera[0]}}')">Forma</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link-main text-dark">Porównanie</a>
+                </li>
+            </ul>
+        </div>
+        <div class="row">
+
+            <div class="col-md-12 mb-4" id="homeTable">
+                <header class="bg-dark text-danger p-3">
+
+                </header>
+                <div class="col-md-12 mb-4" id="awayTable">
+
+                    <div class="d-flex justify-content-center">
+                        <canvas id="timeCanvas"></canvas>
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <canvas id="statsCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Dodanie Bootstrap JS -->
+            <script>
+                var ctx1 = document.getElementById('timeCanvas').getContext('2d');
+                var img1 = new Image();
+                img1.onload = function () {
+                    ctx1.canvas.width = img1.width;
+                    ctx1.canvas.height = img1.height;
+                    ctx1.drawImage(img1, 0, 0);
+                }
+                img1.src = 'data:image/png;base64,{{ time_played }}';
+
+                var ctx2 = document.getElementById('statsCanvas').getContext('2d');
+                var img2 = new Image();
+                img2.onload = function () {
+                    ctx2.canvas.width = img2.width;
+                    ctx2.canvas.height = img2.height;
+                    ctx2.drawImage(img2, 0, 0);
+                }
+                img2.src = 'data:image/png;base64,{{ statistics }}';
+
+            </script>
+
+            <script src="{{ url_for('static', filename='script.js') }}"></script>
+            <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+
+</html>
