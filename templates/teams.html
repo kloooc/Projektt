@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Drużyny</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
@@ -11,16 +12,17 @@
     <header class="bg-dark text-danger p-3">
         <nav class="navbar navbar-expand-lg navbar-dark">
             <a class="navbar-brand" href="/">Main</a>
-    
+
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-    
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ml-auto">
                     {% if user_type == 'guest' %}
-                    <li class="nav-item"><a class="nav-link text-white" href="/login_register">Logowanie/Rejestracja</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="/login_register">Logowanie/Rejestracja</a>
+                    </li>
                     {% elif user_type == 'user' %}
                     <!-- Dodaj opcje dostępne tylko dla użytkownika -->
                     <li class="nav-item"><a class="nav-link text-white" href="/user_profile">Profil użytkownika</a></li>
@@ -46,121 +48,134 @@
 
     <div class="container-fluid">
         <header class="bg-dark text-danger p-3">
-           
+
         </header>
-    
+
         <div class="container mt-4">
             <div class="center-btns">
                 <button class="btn btn-custom me-2" onclick="showHomeTable()">Drużyny u siebie</button>
                 <button class="btn btn-custom me-2" onclick="showAwayTable()">Drużyny na wyjeździe</button>
                 <button class="btn btn-custom" onclick="showWholeTable()">Pokaż całą tabelę</button>
             </div>
-    
-
-    <table id="homeTable" style="display: none;">
-        <thead class="thead-light">
-            <tr>
-                <th>ID</th>
-                <th>Nazwa drużyny</th>
-                <th>MP</th>
-                <th>W</th>
-                <th>D</th>
-                <th>L</th>
-                <th>GD</th>
-                <th>PTS</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for index in indexesh %}
-            <tr>
-                <td>{{ index }}</td>
-                <td onclick="openTeam('{{ teamsh[index-1][0] }}')"
-                    data-original-team-id="{{ teamsh[index-1][1] }}">
-                    <img src="{{ teamsh[index-1][2] }}" alt="Logo drużyny" class="img-fluid">
-                    {{ teamsh[index-1][1] }}
-                </td>
-                <td>{{ teamsh[index-1][3] + teamsh[index-1][4] + teamsh[index-1][5] }}</td>
-                <td>{{ teamsh[index-1][3] }}</td>
-                <td>{{ teamsh[index-1][4] }}</td>
-                <td>{{ teamsh[index-1][5] }}</td>
-                <td>{{ teamsh[index-1][7] }}</td>
-                <td>{{ teamsh[index-1][8] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    
-    <table id="awayTable" style="display: none;">
-        <thead class="thead-light">
-            <tr>
-                <th>ID</th>
-                <th>Nazwa drużyny</th>
-                <th>MP</th>
-                <th>W</th>
-                <th>D</th>
-                <th>L</th>
-                <th>GD</th>
-                <th>PTS</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for index in indexesa %}
-            <tr>
-                <td>{{ index }}</td>
-                <td onclick="openTeam('{{ teamsa[index-1][0] }}')"
-                    data-original-team-id="{{ teamsa[index-1][1] }}">
-                    <img src="{{ teamsa[index-1][2] }}" alt="Logo drużyny" class="img-fluid">
-                    {{ teamsa[index-1][1] }}
-                </td>
-                <td>{{ teamsa[index-1][3] + teamsa[index-1][4] + teamsa[index-1][5] }}</td>
-                <td>{{ teamsa[index-1][3] }}</td>
-                <td>{{ teamsa[index-1][4] }}</td>
-                <td>{{ teamsa[index-1][5] }}</td>
-                <td>{{ teamsa[index-1][7] }}</td>
-                <td>{{ teamsa[index-1][8] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    
-    <table id="wholeTable">
-        <thead class="thead-light">
-            <tr>
-                <th>ID</th>
-                <th>Nazwa drużyny</th>
-                <th>MP</th>
-                <th>W</th>
-                <th>D</th>
-                <th>L</th>
-                <th>GD</th>
-                <th>PTS</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for index in indexes %}
-            <tr>
-                <td>{{ index }}</td>
-                <td onclick="openTeam('{{ teams[index-1][0] }}')"
-                    data-original-team-id="{{ teams[index-1][1] }}">
-                    <img src="{{ teams[index-1][2] }}" alt="Logo drużyny" class="img-fluid">
-                    {{ teams[index-1][1] }}
-                </td>
-                <td>{{ teams[index-1][3] + teams[index-1][4] + teams[index-1][5] }}</td>
-                <td>{{ teams[index-1][3] }}</td>
-                <td>{{ teams[index-1][4] }}</td>
-                <td>{{ teams[index-1][5] }}</td>
-                <td>{{ teams[index-1][7] }}</td>
-                <td>{{ teams[index-1][8] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    </div>
 
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <table id="homeTable" class="table table-striped table-bordered" style="display: none;">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nazwa drużyny</th>
+                                    <th>MP</th>
+                                    <th>W</th>
+                                    <th>D</th>
+                                    <th>L</th>
+                                    <th>GD</th>
+                                    <th>PTS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for index in indexesh %}
+                                <tr>
+                                    <td>{{ index }}</td>
+                                    <td onclick="openTeam('{{ teamsh[index-1][0] }}')"
+                                        data-original-team-id="{{ teamsh[index-1][1] }}">
+                                        <img src="{{ teamsh[index-1][2] }}" alt="Logo drużyny" class="img-fluid">
+                                        {{ teamsh[index-1][1] }}
+                                    </td>
+                                    <td>{{ teamsh[index-1][3] + teamsh[index-1][4] + teamsh[index-1][5] }}</td>
+                                    <td>{{ teamsh[index-1][3] }}</td>
+                                    <td>{{ teamsh[index-1][4] }}</td>
+                                    <td>{{ teamsh[index-1][5] }}</td>
+                                    <td>{{ teamsh[index-1][7] }}</td>
+                                    <td>{{ teamsh[index-1][8] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <table id="awayTable" class="table table-striped table-bordered" style="display: none;">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nazwa drużyny</th>
+                                    <th>MP</th>
+                                    <th>W</th>
+                                    <th>D</th>
+                                    <th>L</th>
+                                    <th>GD</th>
+                                    <th>PTS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for index in indexesa %}
+                                <tr>
+                                    <td>{{ index }}</td>
+                                    <td onclick="openTeam('{{ teamsa[index-1][0] }}')"
+                                        data-original-team-id="{{ teamsa[index-1][1] }}">
+                                        <img src="{{ teamsa[index-1][2] }}" alt="Logo drużyny" class="img-fluid">
+                                        {{ teamsa[index-1][1] }}
+                                    </td>
+                                    <td>{{ teamsa[index-1][3] + teamsa[index-1][4] + teamsa[index-1][5] }}</td>
+                                    <td>{{ teamsa[index-1][3] }}</td>
+                                    <td>{{ teamsa[index-1][4] }}</td>
+                                    <td>{{ teamsa[index-1][5] }}</td>
+                                    <td>{{ teamsa[index-1][7] }}</td>
+                                    <td>{{ teamsa[index-1][8] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <table id="wholeTable" class="table table-striped table-bordered">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nazwa drużyny</th>
+                                    <th>MP</th>
+                                    <th>W</th>
+                                    <th>D</th>
+                                    <th>L</th>
+                                    <th>GD</th>
+                                    <th>PTS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for index in indexes %}
+                                <tr>
+                                    <td>{{ index }}</td>
+                                    <td onclick="openTeam('{{ teams[index-1][0] }}')"
+                                        data-original-team-id="{{ teams[index-1][1] }}">
+                                        <img src="{{ teams[index-1][2] }}" alt="Logo drużyny" class="img-fluid">
+                                        {{ teams[index-1][1] }}
+                                    </td>
+                                    <td>{{ teams[index-1][3] + teams[index-1][4] + teams[index-1][5] }}</td>
+                                    <td>{{ teams[index-1][3] }}</td>
+                                    <td>{{ teams[index-1][4] }}</td>
+                                    <td>{{ teams[index-1][5] }}</td>
+                                    <td>{{ teams[index-1][7] }}</td>
+                                    <td>{{ teams[index-1][8] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>

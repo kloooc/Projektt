@@ -14,7 +14,7 @@
 
         <!-- Tabela z statystykami meczu -->
         <div class="container">
-            <h1 class="text-center">Statystyki meczu</h1>
+            <h1 class="text-center">Skład</h1>
 
             <!-- Karty z informacjami o meczach -->
             <div class="card">
@@ -38,31 +38,27 @@
                 <ul class="nav container-fluid">
                     <li class="nav-item"><a class="nav-link-main text-dark"
                             onclick="openStats('{{ match[3] }}')">Statystyki</a></li>
-                    <li class="nav-item"><a class="nav-link-main text-dark" 
+                    <li class="nav-item"><a class="nav-link-main text-dark"
                             onclick="openComposition('{{ match[3] }}')">Skład</a></li>
                     <li class="nav-item">
-                        <a class="nav-link-main text-dark" 
-                        onclick="showMatchAnalysis('{{ match[3] }}')">Analiza przedmeczowa</a></li>
+                        <a class="nav-link-main text-dark" onclick="showMatchAnalysis('{{ match[3] }}')">Analiza
+                            przedmeczowa</a>
+                    </li>
                 </ul>
             </div>
-            <table class="table table-bordered">
-                <thead class="thead-dark">
-                    <tr>
-                        <th scope="col">{{ teamA }}</th>
-                        <th scope="col">Kategoria</th>
-                        <th scope="col">{{ teamB }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for stat in stats %}
-                    <tr>
-                        <td>{{ stat[1] }}</td>
-                        <td>{{ stat[0] }}</td>
-                        <td>{{ stat[2] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <h2>Zawodnicy drużyny {{ teamA }}</h2>
+            <ul>
+                {% for playerh in playerh %}
+                <li>{{ playerh[0] }}</li>
+                {% endfor %}
+            </ul>
+
+            <h2>Zawodnicy drużyny {{ teamB }}</h2>
+            <ul>
+                {% for playera in playera %}
+                <li>{{ playera[0] }}</li>
+                {% endfor %}
+            </ul>
         </div>
 
         <!-- Dodanie Bootstrap JS -->

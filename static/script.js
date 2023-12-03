@@ -45,6 +45,9 @@ function openTeamWyniki(teamID) {
 function openTeamsklad(teamID) {
     window.location.href = '/team?teamID=' + teamID;
 }
+function openComposition(matchID) {
+    window.location.href = '/composition?matchID=' + matchID;
+}
 
 function showMatchAnalysis(matchID) {
 
@@ -67,6 +70,11 @@ function showPlayer(playerID) {
 function showPlayerForm(playerID) {
 
     window.location.href = '/playerform?playerID=' + playerID; // Przekierowanie do strony analizy meczu
+}
+
+function showPlayerCompare(playerID) {
+
+    window.location.href = '/playercompare?playerID=' + playerID; // Przekierowanie do strony analizy meczu
 }
 
 function showHomeTable() {

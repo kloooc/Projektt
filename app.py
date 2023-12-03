@@ -4,7 +4,7 @@ import hashlib
 import io
 import signal
 import sys
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, jsonify, render_template, request, redirect, url_for, session
 import sqlite3
 import subprocess
 from flask_session import Session
@@ -84,6 +84,8 @@ def show_main():
         matches AS m
     ON
         t.id_team = m.teamA_id OR t.id_team = m.teamB_id
+    WHERE
+        m.date BETWEEN '2023-07-20 00:00:00' AND '2024-05-26 00:00:00'
     GROUP BY
         t.id_team
     ORDER BY
@@ -107,7 +109,6 @@ def show_main():
     """)
     upcoming_matches = cursor.fetchall()
 
-    # Pobierz mecze rozegrane
     cursor.execute("""
     SELECT matches.date, teamsA.team AS teamA, matches.scoreA, matches.scoreB, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
     FROM matches
@@ -115,7 +116,7 @@ def show_main():
     INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
     WHERE NOT (matches.scoreA IS NULL AND matches.scoreB IS NULL)
     ORDER BY
-        matches.date DESC  -- Sortowanie według daty malejąco
+        matches.date DESC
     LIMIT 6;
     """)
     played_matches = cursor.fetchall()
@@ -175,6 +176,8 @@ def display_teams():
         matches AS m
     ON
         t.id_team = m.teamA_id OR t.id_team = m.teamB_id
+    WHERE
+        m.date BETWEEN '2023-07-20 00:00:00' AND '2024-05-26 00:00:00'
     GROUP BY
         t.id_team
     ORDER BY
@@ -221,6 +224,8 @@ def display_teams():
         matches AS m
     ON
         t.id_team = m.teamB_id 
+    WHERE
+        m.date BETWEEN '2023-07-20 00:00:00' AND '2024-05-26 00:00:00'
     GROUP BY
         t.id_team
     ORDER BY
@@ -267,6 +272,8 @@ def display_teams():
         matches AS m
     ON
         t.id_team = m.teamA_id 
+    WHERE
+        m.date BETWEEN '2023-07-20 00:00:00' AND '2024-05-26 00:00:00'
     GROUP BY
         t.id_team
     ORDER BY
@@ -360,7 +367,6 @@ def show_stats():
     # Wyświetl szablon HTML z danymi
     return render_template('stats.html', teamA=teamA, teamB=teamB, stats=stats,match=match, logoA=logoA, logoB=logoB)
 
-from flask import render_template
 
 @app.route('/statsUP')
 def show_stats_upcoming():
@@ -619,9 +625,9 @@ def show_wyniki():
     INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
     INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
     WHERE NOT (matches.scoreA IS NULL AND matches.scoreB IS NULL)
-    ORDER BY
-        matches.date DESC;  -- Sortowanie według daty malejąco
-    """)
+    AND matches.date BETWEEN '2023-07-20 00:00:00' AND '2024-05-26 00:00:00'  -- Dodany warunek WHERE dla daty
+    ORDER BY matches.date DESC;
+""")
     played_matches = cursor.fetchall()
 
 
@@ -1058,8 +1064,9 @@ def show_player():
 
     return render_template('player.html', matches_and_players=matches_and_players, player=player, playera=playera, statistics=statistics, time_played=time_played, teams=teams)
 
-@app.route('/playerform', methods=['GET', 'POST'])
-def show_playerForm():
+
+@app.route('/playercompare', methods=['GET', 'POST'])
+def show_playerCompare():
     playerID = request.args.get('playerID')
 
     if playerID is None:
@@ -1152,24 +1159,7 @@ def show_playerForm():
 
     time_played = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-    plt.figure(figsize=(8, 6))
 
-    plt.scatter(match_numbers, [row[4] for row in results], label='Goals', color='blue')
-    plt.scatter(match_numbers, [row[5] for row in results], label='Assists', color='green')
-    plt.scatter(match_numbers, [row[6] for row in results], label='Yellow Cards', color='yellow')
-
-
-    plt.title('Statystyki meczowe')
-    plt.xlabel('Numer meczu')
-    plt.ylabel('Wartość')
-    plt.legend()
-    plt.grid(True)
-
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format='png')
-    buffer.seek(0)
-
-    statistics = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
     query = '''
     SELECT distinct teams.id_team, teams.team
@@ -1181,7 +1171,210 @@ def show_playerForm():
     cursor.execute(query)
     teams = cursor.fetchall()
 
-    return render_template('playerform.html', player=player, playera=playera, statistics=statistics, time_played=time_played, teams=teams)
+    return render_template('playercompare.html',playerID=playerID, player=player, playera=playera, time_played=time_played, teams=teams)
+
+@app.route('/get_players', methods=['POST'])
+def get_players():
+    team_id = request.json.get('teamId')  # Pobranie ID wybranej drużyny z żądania POST
+    playerID = request.json.get('playerID')
+    print(team_id)
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    query = '''
+    SELECT p.player_id, p.full_name, t.id_team, pos.position_name
+    FROM players AS p
+    JOIN player_positions AS pp ON p.player_id = pp.player_id
+    JOIN positions AS pos ON pp.position_id = pos.position_id
+    JOIN teams_players AS tp ON p.player_id = tp.player_id
+    JOIN teams AS t ON tp.id_team = t.id_team
+    Where t.id_team = ? AND pos.position_name != "trener" AND p.player_id != ?
+'''
+    cursor.execute(query, (team_id,playerID))
+
+    results = cursor.fetchall()
+
+    players = []  # Inicjalizacja listy graczy
+
+    # Przetwarzanie wyników zapytania i dodanie do listy players
+    for row in results:
+        player_data = {
+            'player_id': row[0],
+            'full_name': row[1],
+            'position_name': row[3]
+        }
+        players.append(player_data)
+
+    # Zamykanie połączenia z bazą danych
+    conn.close()
+
+    return jsonify({'players': players})  # Zwrócenie listy zawodników jako odpowiedź JSON
+
+@app.route('/get_player_data', methods=['POST'])
+def get_player_data():
+    player_id = request.json.get('player_id')
+    playerID = request.json.get('playerID')
+    
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+
+    # Zapytanie dla zawodnika A
+    query_player_a = '''
+        SELECT
+            players.player_id,
+            players.full_name,
+            match_players.time_played,
+            match_players.matchid,
+            match_players.goals,
+            match_players.assists,
+            match_players.yellow_card,
+            match_players.red_card
+        FROM
+            players
+        LEFT JOIN
+            match_players ON players.player_id = match_players.player_id
+        WHERE players.player_id = ?
+        ORDER BY match_players.matchid ASC
+    '''
+
+    # Zapytanie dla zawodnika B
+    query_player_b = '''
+        SELECT
+            players.player_id,
+            players.full_name,
+            match_players.time_played,
+            match_players.matchid,
+            match_players.goals,
+            match_players.assists,
+            match_players.yellow_card,
+            match_players.red_card
+        FROM
+            players
+        LEFT JOIN
+            match_players ON players.player_id = match_players.player_id
+        WHERE players.player_id = ?
+        ORDER BY match_players.matchid ASC
+    '''
+
+    # Wykonanie zapytania dla zawodnika A
+    cursor.execute(query_player_a, (player_id,))
+    results_player_a = cursor.fetchall()
+
+    # Wykonanie zapytania dla zawodnika B
+    cursor.execute(query_player_b, (playerID,))
+    results_player_b = cursor.fetchall()
+
+    if results_player_a and results_player_b:
+        match_ids_a = [row[3] for row in results_player_a]
+        unique_match_ids_a = sorted(set(match_ids_a))
+        match_number_dict_a = {match_id: index + 1 for index, match_id in enumerate(unique_match_ids_a)}
+
+        match_numbers_a = [match_number_dict_a[row[3]] for row in results_player_a]
+
+        total_time_played_p1 = [0]  # Czas gry dla zawodnika A
+        total_time_played_p2 = [0]  # Czas gry dla zawodnika B
+
+        for row in results_player_a:
+            time_played = row[2]
+            total_time_played_p1.append(total_time_played_p1[-1] + time_played)
+
+        total_time_played_p1.pop(0)
+
+        for row in results_player_b:
+            time_played = row[2]
+            total_time_played_p2.append(total_time_played_p2[-1] + time_played)
+
+        total_time_played_p2.pop(0)
+        
+        player_name_a = results_player_a[0][1]  # Nazwa zawodnika A
+        player_name_b = results_player_b[0][1]  # Nazwa zawodnika B
+        
+        plt.figure(figsize=(8, 6))
+        plt.plot(match_numbers_a, total_time_played_p1, label=player_name_a, linestyle='-')
+        plt.plot(match_numbers_a, total_time_played_p2, label=player_name_b, linestyle='-')
+
+        plt.title('Czas gry')
+        plt.xlabel('Numer meczu')
+        plt.ylabel('Suma minut możliwych do rozegrania')
+        plt.grid(True)
+        plt.legend()  # Dodanie legendy
+
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+
+        time_played = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+        conn.close()
+
+        return jsonify({'time_played': time_played})
+
+    return jsonify({'error': 'Brak danych dla obu graczy'})
+
+@app.route('/composition')
+def show_composition():
+    matchID = request.args.get('matchID')
+    
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+
+    # Pobierz dane meczu z bazy danych
+    cursor.execute("SELECT teamsA.team AS teamA, teamsB.team AS teamB FROM matches INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team WHERE matchID = ?", (matchID,))
+    result = cursor.fetchone()
+    
+
+    cursor.execute("SELECT date, scoreA, scoreB, matchID from matches where matchID=?",(matchID,))
+    match = cursor.fetchone()
+
+
+    if result:
+        teamA, teamB = result
+    else:
+        # Jeśli mecz nie istnieje, obsłuż to zgodnie z własnymi potrzebami
+        return "Mecz nie istnieje"
+    
+    
+    cursor.execute("SELECT logo from teams where team=?",(teamA,))
+    logoA = cursor.fetchone()
+
+    cursor.execute("SELECT logo from teams where team=?",(teamB,))
+    logoB = cursor.fetchone()
+
+    cursor.execute("SELECT id_team from teams where team=?", (teamA,))
+    teamA_id = cursor.fetchone()
+    if teamA_id:
+        teamA_id = teamA_id[0]  # Pobranie wartości z krotki
+
+    cursor.execute("SELECT id_team from teams where team=?", (teamB,))
+    teamB_id = cursor.fetchone()
+    if teamB_id:
+        teamB_id = teamB_id[0]  # Pobranie wartości z krotki
+
+
+    cursor.execute("""
+        SELECT p.full_name
+        FROM players p
+        INNER JOIN match_players mp ON p.player_id = mp.player_id
+        INNER JOIN matches m ON mp.matchid = m.matchid
+        INNER JOIN teams_players tp ON p.player_id = tp.player_id
+        WHERE tp.id_team = ? AND mp.time_played > 0 AND m.matchid = ?
+        """, (teamA_id, matchID)) 
+    playerh = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT p.full_name
+        FROM players p
+        INNER JOIN match_players mp ON p.player_id = mp.player_id
+        INNER JOIN matches m ON mp.matchid = m.matchid
+        INNER JOIN teams_players tp ON p.player_id = tp.player_id
+        WHERE tp.id_team = ? AND mp.time_played > 0 AND m.matchid = ?
+        """, (teamB_id, matchID)) 
+    playera = cursor.fetchall()
+
+    # Zamknij połączenie z bazą danych
+    conn.close()
+
+    # Wyświetl szablon HTML z danymi
+    return render_template('composition.html', teamA=teamA, teamB=teamB, match=match, logoA=logoA, logoB=logoB, playerh=playerh, playera=playera)
 
 if __name__ == '__main__':
     app.run(debug=True)

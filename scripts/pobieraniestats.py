@@ -10,7 +10,7 @@ import sys
 driver = webdriver.Chrome()
 
 # Otwarcie strony z wynikami
-driver.get("https://www.flashscore.pl/mecz/SQSmQWkI/#/szczegoly-meczu/statystyki-meczu/0")
+driver.get("https://www.flashscore.pl/mecz/KGgchU8S/#/szczegoly-meczu/statystyki-meczu/0")
 
 # Poczekaj, aż strona się załaduje (możesz dostosować czas)
 driver.implicitly_wait(10)
@@ -68,25 +68,17 @@ for participant_div in participant_divs:
 # Wydrukuj zebrane dane
 for i, team_name in enumerate(teams):
     print(f"Drużyna {i+1}: {team_name}")
-
-
-
+    
 # Przetwarzaj i wydrukowuj zawartość wszystkich znalezionych divów
-category_divs = soup.find_all('div', {'class': '_categoryName_11si3_5'})
-home_divs = soup.find_all('div', {'class': '_value_v26p1_5 _homeValue_v26p1_10'})
-away_divs = soup.find_all('div', {'class': '_value_v26p1_5 _awayValue_v26p1_14'})
+category_divs = soup.find_all('div', {'class': '_category_1ofrm_5'})
+home_divs = soup.find_all('div', {'class': '_value_rvaa1_5 _homeValue_rvaa1_10'})
+away_divs = soup.find_all('div', {'class': '_value_rvaa1_5 _awayValue_rvaa1_14'})
 
 
-
-# Przetwarzaj i wydrukowuj zawartość wszystkich znalezionych divów
-for category_div, home_div, away_div in zip(category_divs, home_divs, away_divs):
-    category_text = category_div.text.strip()
-    home_value_text = home_div.text.strip()
-    away_value_text = away_div.text.strip()
 
 # Połącz się z bazą danych
-    conn = sqlite3.connect('football_teams.db')
-    cursor = conn.cursor()
+conn = sqlite3.connect('football_teams.db')
+cursor = conn.cursor()
     
 
 # Nazwy drużyn
@@ -113,7 +105,20 @@ else:
 print(f"Identyfikator drużyny A: {teamA_id}")
 print(f"Identyfikator drużyny B: {teamB_id}")
 
-cursor.execute("SELECT matchID FROM matches WHERE teamA_id = ? AND teamB_id = ?", (teamA_id,teamB_id))
+cursor.execute("SELECT MAX(matchID) FROM matches")
+max_match_id = cursor.fetchone()[0]
+
+# Zwiększ wartość maksymalną o 1, jeśli max_match_id nie jest None (jeśli tabela nie jest pusta)
+next_match_id = max_match_id + 1 if max_match_id is not None else 1
+
+# Wstaw nowy rekord z uzyskanym matchID
+cursor.execute("INSERT INTO matches (matchID, teamA_id, teamB_id, date, scoreA, scoreB) VALUES (?, ?, ?, ?, ?, ?)",
+               (next_match_id, teamA_id, teamB_id, new_date_obj, score[0], score[1]))
+
+# Zatwierdź zmiany w bazie danych
+conn.commit()
+
+cursor.execute("SELECT matchID FROM matches WHERE teamA_id = ? AND teamB_id = ? AND date = ?", (teamA_id,teamB_id, new_date_obj))
 result = cursor.fetchone()
 if result:
     matchID = result[0]
@@ -138,9 +143,6 @@ for category, home_value, away_value in zip(category_divs, home_divs, away_divs)
         # Jeśli kategoria nie istnieje w tabeli categories, możesz zdecydować, co zrobić
         print(f"Uwaga: Kategoria '{category_text}' nie istnieje w tabeli categories.")
         continue
-
-    cursor.execute("UPDATE matches SET date = ?, scoreA = ?, scoreB = ? WHERE matchID = ?",
-               (new_date_obj, score[0], score[1], matchID))
     
     cursor.execute("INSERT INTO stats (match_id, categoryid, home_value, away_value) VALUES (?, ?, ?, ?)",
                    (matchID, category_id, home_value_text, away_value_text))
@@ -151,9 +153,10 @@ for category, home_value, away_value in zip(category_divs, home_divs, away_divs)
     print("away value:", away_value_text)
     print("\n")
 
-
 # Zatwierdź zmiany w bazie danych
 conn.commit()
+
+
 
 # Zamknij połączenie z bazą danych
 conn.close()

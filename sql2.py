@@ -1,27 +1,23 @@
 import sqlite3
 
-# Tworzenie połączenia z bazą danych
+# Połączenie z bazą danych
 conn = sqlite3.connect('football_teams.db')
 cursor = conn.cursor()
 
-# Zapytanie SQL z złączeniem tabel i warunkiem daty meczu
-query = '''
-    SELECT distinct teams.id_team, teams.team
-    FROM teams
-    JOIN matches ON teams.id_team = matches.teamA_id
-    WHERE matches.date > '2023-07-01'
-    Order by teams.id_team asc;
-'''
+cursor.execute("""
+    SELECT p.full_name
+    FROM players p
+    INNER JOIN match_players mp ON p.player_id = mp.player_id
+    INNER JOIN matches m ON mp.matchid = m.matchid
+    WHERE m.teamA_id = 2 AND mp.time_played > 0 AND m.matchid = 141
+    """)
 
-# Wykonanie zapytania
-cursor.execute(query)
-
-# Pobranie wszystkich wierszy wyniku
+# Pobranie wyników zapytania
 results = cursor.fetchall()
 
 # Wyświetlenie wyników
 for row in results:
-    print(row)  # Wyświetlenie każdego wiersza (id_team, team, match_date)
+    print(row[0])  # Wyświetlenie wartości z kolumny full_name
 
 # Zamknięcie połączenia z bazą danych
 conn.close()
