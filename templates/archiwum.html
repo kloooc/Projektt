@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archiwum</title>
+    <!-- Dodaj link do Bootstrapa -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+    <header class="bg-dark text-danger p-3">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <a class="navbar-brand" href="/">Main</a>
+
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    {% if user_type == 'guest' %}
+                    <li class="nav-item"><a class="nav-link text-white" href="/login_register">Logowanie/Rejestracja</a>
+                    </li>
+                    {% elif user_type == 'user' %}
+                    <!-- Dodaj opcje dostępne tylko dla użytkownika -->
+                    <li class="nav-item"><a class="nav-link text-white" href="/user_profile">Profil użytkownika</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="/logout">Wyloguj się</a></li>
+                    {% elif user_type == 'admin' %}
+                    <!-- Dodaj opcje dostępne tylko dla administratora -->
+                    <li class="nav-item"><a class="nav-link text-white" href="/admin">Panel administratora</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="/logout">Wyloguj się</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="main-menu">
+        <ul class="nav">
+            <li class="nav-item"><a class="nav-link-main text-light" href="/">Main</a></li>
+            <li class="nav-item"><a class="nav-link-main text-light" href="/teams">Tabela</a></li>
+            <li class="nav-item"><a class="nav-link-main text-light" href="/matches">Mecze</a></li>
+            <li class="nav-item"><a class="nav-link-main text-light" href="/wyniki">Wyniki</a></li>
+            <li class="nav-item"><a class="nav-link-main text-light" href="/archiwum">Archiwum</a></li>
+        </ul>
+    </div>
+
+    <div class="container-fluid">
+        <header class="bg-dark text-danger p-3">
+
+        </header>
+    <ul class="nav">
+    <li class="nav-item"><a class="season-link nav-link-main text-light" href="/archiwum/sezon23-24">Sezon 2023/2024</a></li>
+    <li class="nav-item"><a class="season-link nav-link-main text-light" href="/archiwum/sezon22-23">Sezon 2022/2023</a></li>
+    <li class="nav-item"><a class="season-link nav-link-main text-light" href="/archiwum/sezon21-22">Sezon 2021/2022</a></li>
+    <li class="nav-item"><a class="season-link nav-link-main text-light" href="/archiwum/sezon20-21">Sezon 2020/2021</a></li>
+    <li class="nav-item"><a class="season-link nav-link-main text-light" href="/archiwum/sezon19-20">Sezon 2019/2020</a></li>
+    </ul>
+    <!-- Tutaj można umieścić miejsce na wyświetlanie danych z archiwum -->
+    <div id="archiwum-content"></div>
+
+    <script>
+        // Obsługa kliknięć na linki do sezonów
+        const seasonLinks = document.querySelectorAll('.season-link');
+        const archiwumContent = document.getElementById('archiwum-content');
+
+        seasonLinks.forEach(link => {
+            link.addEventListener('click', function(event) {
+                event.preventDefault(); // Zapobiega domyślnej akcji przekierowania
+
+                // Pobierz adres URL z linka
+                const url = this.getAttribute('href');
+
+                // Wyślij żądanie GET do serwera Flask po kliknięciu linka
+                fetch(url)
+                    .then(response => response.text())
+                    .then(data => {
+                        // Wyświetl pobrane dane w divie 'archiwum-content'
+                        archiwumContent.innerHTML = data;
+                    })
+                    .catch(error => console.log(error));
+            });
+        });
+    </script>
+        <header class="bg-dark text-danger p-3">
+
+        </header>
+        </div>
+
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

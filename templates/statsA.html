@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Statystyki meczu</title>
+    <!-- Dodanie Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- Tabela z statystykami meczu -->
+        <div class="container">
+            <h1 class="text-center">Statystyki meczu</h1>
+
+            <!-- Karty z informacjami o meczach -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ match[0] }}</h5>
+                    <p class="card-text text-center">
+                        <img src="{{ logoA[0] }}" height="50"> {{ teamA }} {{ match[1] }} : {{ match[2] }} {{ teamB }}
+                        <img src="{{ logoB[0] }}" height="50">
+                    </p>
+                </div>
+            </div>
+
+
+        </div>
+        <div class="container-fluid">
+            <header class="bg-dark text-danger p-3">
+
+            </header>
+
+            <div class="main-menu bg-light">
+                <ul class="nav container-fluid">
+                    <li class="nav-item"><a class="nav-link-main text-dark"
+                            onclick="openStatsA('{{ match[3] }}')">Statystyki</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link-main text-dark" 
+                        onclick="showMatchAnalysisA('{{ match[3] }}')">Analiza przedmeczowa</a></li>
+                </ul>
+            </div>
+            <table class="table table-bordered">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">{{ teamA }}</th>
+                        <th scope="col">Kategoria</th>
+                        <th scope="col">{{ teamB }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in stats %}
+                    <tr>
+                        <td>{{ stat[1] }}</td>
+                        <td>{{ stat[0] }}</td>
+                        <td>{{ stat[2] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Dodanie Bootstrap JS -->
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+</html>

@@ -1376,5 +1376,434 @@ def show_composition():
     # Wyświetl szablon HTML z danymi
     return render_template('composition.html', teamA=teamA, teamB=teamB, match=match, logoA=logoA, logoB=logoB, playerh=playerh, playera=playera)
 
+@app.route('/archiwum')
+def archiwum():
+    user_type = session.get('user_type', 'guest')
+    return render_template('archiwum.html', user_type=user_type)
+
+@app.route('/archiwum/sezon23-24')
+def sezon_23_24():
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    # Wykonaj zapytanie SQL
+    query = """
+    SELECT
+        t.id_team,
+        t.team AS Team_Name,
+        t.logo AS Team_Logo,
+        COUNT(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA > m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB > m.scoreA) THEN 1
+            ELSE NULL
+        END) AS Wins,
+        COUNT(CASE
+            WHEN m.scoreA = m.scoreB THEN 1
+            ELSE NULL
+        END) AS Draws,
+        COUNT(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA < m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB < m.scoreA) THEN 1
+            ELSE NULL
+        END) AS Losses,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreA
+            ELSE m.scoreB
+        END) AS Goals_Scored,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreB
+            ELSE m.scoreA
+        END) AS Goals_Conceded,
+        SUM(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA > m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB > m.scoreA) THEN 3
+            WHEN m.scoreA = m.scoreB THEN 1
+            ELSE 0
+        END) AS Points,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreA - m.scoreB
+            ELSE m.scoreB - m.scoreA
+        END) AS Goal_Difference
+    FROM
+        teams AS t
+    JOIN
+        matches AS m
+    ON
+        t.id_team = m.teamA_id OR t.id_team = m.teamB_id
+    WHERE
+        m.date BETWEEN '2023-07-20 00:00:00' AND '2024-05-26 00:00:00'
+    GROUP BY
+        t.id_team
+    ORDER BY
+        Points DESC, Goal_Difference DESC;
+    """
+
+    cursor.execute(query)
+    teams = cursor.fetchall()
+
+
+
+    #Utwórz listę indeksów
+    indexes = list(range(1, len(teams) + 1))
+
+
+    cursor.execute("""
+    SELECT matches.date, teamsA.team AS teamA, matches.scoreA, matches.scoreB, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
+    FROM matches
+    INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
+    INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
+    WHERE matches.date BETWEEN '2023-07-20 00:00:00' AND '2024-05-26 00:00:00'
+    ORDER BY
+        matches.date DESC
+    """)
+    matches = cursor.fetchall()
+
+
+        # Zamknij połączenie z bazą danych
+    conn.close()
+    return render_template('sezon23-24.html', teams=teams, indexes=indexes, matches=matches)
+@app.route('/archiwum/sezon22-23')
+def sezon_22_23():
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    # Wykonaj zapytanie SQL
+    query = """
+    SELECT
+        t.id_team,
+        t.team AS Team_Name,
+        t.logo AS Team_Logo,
+        COUNT(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA > m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB > m.scoreA) THEN 1
+            ELSE NULL
+        END) AS Wins,
+        COUNT(CASE
+            WHEN m.scoreA = m.scoreB THEN 1
+            ELSE NULL
+        END) AS Draws,
+        COUNT(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA < m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB < m.scoreA) THEN 1
+            ELSE NULL
+        END) AS Losses,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreA
+            ELSE m.scoreB
+        END) AS Goals_Scored,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreB
+            ELSE m.scoreA
+        END) AS Goals_Conceded,
+        SUM(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA > m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB > m.scoreA) THEN 3
+            WHEN m.scoreA = m.scoreB THEN 1
+            ELSE 0
+        END) AS Points,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreA - m.scoreB
+            ELSE m.scoreB - m.scoreA
+        END) AS Goal_Difference
+    FROM
+        teams AS t
+    JOIN
+        matches AS m
+    ON
+        t.id_team = m.teamA_id OR t.id_team = m.teamB_id
+    WHERE
+        m.date BETWEEN '2022-07-20 00:00:00' AND '2023-05-28 00:00:00'
+    GROUP BY
+        t.id_team
+    ORDER BY
+        Points DESC, Goal_Difference DESC;
+    """
+
+    cursor.execute(query)
+    teams = cursor.fetchall()
+
+
+
+    #Utwórz listę indeksów
+    indexes = list(range(1, len(teams) + 1))
+
+
+    cursor.execute("""
+    SELECT matches.date, teamsA.team AS teamA, matches.scoreA, matches.scoreB, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
+    FROM matches
+    INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
+    INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
+    WHERE matches.date BETWEEN '2022-07-20 00:00:00' AND '2023-05-28 00:00:00'
+    ORDER BY
+        matches.date DESC
+    """)
+    matches = cursor.fetchall()
+
+
+        # Zamknij połączenie z bazą danych
+    conn.close()
+    return render_template('sezon22-23.html', teams=teams, indexes=indexes, matches=matches)
+@app.route('/archiwum/sezon21-22')
+def sezon_21_22():
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    # Wykonaj zapytanie SQL
+    query = """
+    SELECT
+        t.id_team,
+        t.team AS Team_Name,
+        t.logo AS Team_Logo,
+        COUNT(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA > m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB > m.scoreA) THEN 1
+            ELSE NULL
+        END) AS Wins,
+        COUNT(CASE
+            WHEN m.scoreA = m.scoreB THEN 1
+            ELSE NULL
+        END) AS Draws,
+        COUNT(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA < m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB < m.scoreA) THEN 1
+            ELSE NULL
+        END) AS Losses,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreA
+            ELSE m.scoreB
+        END) AS Goals_Scored,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreB
+            ELSE m.scoreA
+        END) AS Goals_Conceded,
+        SUM(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA > m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB > m.scoreA) THEN 3
+            WHEN m.scoreA = m.scoreB THEN 1
+            ELSE 0
+        END) AS Points,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreA - m.scoreB
+            ELSE m.scoreB - m.scoreA
+        END) AS Goal_Difference
+    FROM
+        teams AS t
+    JOIN
+        matches AS m
+    ON
+        t.id_team = m.teamA_id OR t.id_team = m.teamB_id
+    WHERE
+        m.date BETWEEN '2021-07-20 00:00:00' AND '2022-05-26 00:00:00'
+    GROUP BY
+        t.id_team
+    ORDER BY
+        Points DESC, Goal_Difference DESC;
+    """
+
+    cursor.execute(query)
+    teams = cursor.fetchall()
+
+
+
+    #Utwórz listę indeksów
+    indexes = list(range(1, len(teams) + 1))
+
+
+    cursor.execute("""
+    SELECT matches.date, teamsA.team AS teamA, matches.scoreA, matches.scoreB, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
+    FROM matches
+    INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
+    INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
+    WHERE matches.date BETWEEN '2021-07-20 00:00:00' AND '2022-05-26 00:00:00'
+    ORDER BY
+        matches.date DESC
+    """)
+    matches = cursor.fetchall()
+
+
+        # Zamknij połączenie z bazą danych
+    conn.close()
+    return render_template('sezon21-22.html', teams=teams, indexes=indexes, matches=matches)
+@app.route('/archiwum/sezon20-21')
+def sezon_20_21():
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    # Wykonaj zapytanie SQL
+    query = """
+    SELECT
+        t.id_team,
+        t.team AS Team_Name,
+        t.logo AS Team_Logo,
+        COUNT(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA > m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB > m.scoreA) THEN 1
+            ELSE NULL
+        END) AS Wins,
+        COUNT(CASE
+            WHEN m.scoreA = m.scoreB THEN 1
+            ELSE NULL
+        END) AS Draws,
+        COUNT(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA < m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB < m.scoreA) THEN 1
+            ELSE NULL
+        END) AS Losses,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreA
+            ELSE m.scoreB
+        END) AS Goals_Scored,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreB
+            ELSE m.scoreA
+        END) AS Goals_Conceded,
+        SUM(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA > m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB > m.scoreA) THEN 3
+            WHEN m.scoreA = m.scoreB THEN 1
+            ELSE 0
+        END) AS Points,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreA - m.scoreB
+            ELSE m.scoreB - m.scoreA
+        END) AS Goal_Difference
+    FROM
+        teams AS t
+    JOIN
+        matches AS m
+    ON
+        t.id_team = m.teamA_id OR t.id_team = m.teamB_id
+    WHERE
+        m.date BETWEEN '2020-07-20 00:00:00' AND '2021-05-26 00:00:00'
+    GROUP BY
+        t.id_team
+    ORDER BY
+        Points DESC, Goal_Difference DESC;
+    """
+
+    cursor.execute(query)
+    teams = cursor.fetchall()
+
+
+
+    #Utwórz listę indeksów
+    indexes = list(range(1, len(teams) + 1))
+
+
+    cursor.execute("""
+    SELECT matches.date, teamsA.team AS teamA, matches.scoreA, matches.scoreB, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
+    FROM matches
+    INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
+    INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
+    WHERE matches.date BETWEEN '2020-07-20 00:00:00' AND '2021-05-26 00:00:00'
+    ORDER BY
+        matches.date DESC
+    """)
+    matches = cursor.fetchall()
+
+
+        # Zamknij połączenie z bazą danych
+    conn.close()
+    return render_template('sezon20-21.html', teams=teams, indexes=indexes, matches=matches)
+@app.route('/archiwum/sezon19-20')
+def sezon_19_20():
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    # Wykonaj zapytanie SQL
+    query = """
+    SELECT
+        t.id_team,
+        t.team AS Team_Name,
+        t.logo AS Team_Logo,
+        COUNT(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA > m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB > m.scoreA) THEN 1
+            ELSE NULL
+        END) AS Wins,
+        COUNT(CASE
+            WHEN m.scoreA = m.scoreB THEN 1
+            ELSE NULL
+        END) AS Draws,
+        COUNT(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA < m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB < m.scoreA) THEN 1
+            ELSE NULL
+        END) AS Losses,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreA
+            ELSE m.scoreB
+        END) AS Goals_Scored,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreB
+            ELSE m.scoreA
+        END) AS Goals_Conceded,
+        SUM(CASE
+            WHEN (m.teamA_id = t.id_team AND m.scoreA > m.scoreB) OR (m.teamB_id = t.id_team AND m.scoreB > m.scoreA) THEN 3
+            WHEN m.scoreA = m.scoreB THEN 1
+            ELSE 0
+        END) AS Points,
+        SUM(CASE
+            WHEN m.teamA_id = t.id_team THEN m.scoreA - m.scoreB
+            ELSE m.scoreB - m.scoreA
+        END) AS Goal_Difference
+    FROM
+        teams AS t
+    JOIN
+        matches AS m
+    ON
+        t.id_team = m.teamA_id OR t.id_team = m.teamB_id
+    WHERE
+        m.date BETWEEN '2019-07-20 00:00:00' AND '2020-05-26 00:00:00'
+    GROUP BY
+        t.id_team
+    ORDER BY
+        Points DESC, Goal_Difference DESC;
+    """
+
+    cursor.execute(query)
+    teams = cursor.fetchall()
+
+
+
+    #Utwórz listę indeksów
+    indexes = list(range(1, len(teams) + 1))
+
+
+    cursor.execute("""
+    SELECT matches.date, teamsA.team AS teamA, matches.scoreA, matches.scoreB, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
+    FROM matches
+    INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
+    INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
+    WHERE matches.date BETWEEN '2019-07-20 00:00:00' AND '2020-05-26 00:00:00'
+    ORDER BY
+        matches.date DESC
+    """)
+    matches = cursor.fetchall()
+
+
+        # Zamknij połączenie z bazą danych
+    conn.close()
+    return render_template('sezon19-20.html', teams=teams, indexes=indexes, matches=matches)
+
+@app.route('/statsA')
+def show_statsA():
+    matchID = request.args.get('matchID')
+    
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+
+    # Pobierz dane meczu z bazy danych
+    cursor.execute("SELECT teamsA.team AS teamA, teamsB.team AS teamB FROM matches INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team WHERE matchID = ?", (matchID,))
+    result = cursor.fetchone()
+    
+
+    cursor.execute("SELECT date, scoreA, scoreB, matchID from matches where matchID=?",(matchID,))
+    match = cursor.fetchone()
+
+
+    if result:
+        teamA, teamB = result
+    else:
+        # Jeśli mecz nie istnieje, obsłuż to zgodnie z własnymi potrzebami
+        return "Mecz nie istnieje"
+    
+    # Pobierz statystyki meczu z bazy danych
+    cursor.execute("SELECT c.category_name, s.home_value, s.away_value FROM stats s JOIN categories c ON s.categoryid = c.categoryid WHERE s.match_id = ?", (matchID,))
+    stats = cursor.fetchall()
+    
+    cursor.execute("SELECT logo from teams where team=?",(teamA,))
+    logoA = cursor.fetchone()
+
+    cursor.execute("SELECT logo from teams where team=?",(teamB,))
+    logoB = cursor.fetchone()
+
+    # Zamknij połączenie z bazą danych
+    conn.close()
+
+    # Wyświetl szablon HTML z danymi
+    return render_template('statsA.html', teamA=teamA, teamB=teamB, stats=stats, match=match, logoA=logoA, logoB=logoB)
+
 if __name__ == '__main__':
     app.run(debug=True)

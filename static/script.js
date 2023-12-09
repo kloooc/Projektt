@@ -28,6 +28,11 @@ function openStats(matchID) {
     window.open('/stats?matchID=' + matchID, 'Stats', 'width=800,height=800');
 }
 
+function openStatsA(matchID) {
+    // Otwórz stronę 'stats.html' z parametrem 'matchID' w nowym oknie lub karcie przeglądarki
+    window.open('/statsA?matchID=' + matchID, 'Stats', 'width=800,height=800');
+}
+
 function openStatsUM(matchID) {
     window.open('/statsUP?matchID=' + matchID, 'StatsUP', 'width=800,height=800');
 }
