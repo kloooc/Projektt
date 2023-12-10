@@ -4,7 +4,8 @@ import hashlib
 import io
 import signal
 import sys
-from flask import Flask, jsonify, render_template, request, redirect, url_for, session
+import bcrypt
+from flask import Flask, flash, jsonify, render_template, request, redirect, url_for, session
 import sqlite3
 import subprocess
 from flask_session import Session
@@ -43,6 +44,7 @@ def show_main():
         # Połącz się z bazą danych
     conn = sqlite3.connect('football_teams.db')
     cursor = conn.cursor()
+    username = session.get('username', '')
     user_type = session.get('user_type', 'guest')
     query = """
     SELECT
@@ -121,13 +123,69 @@ def show_main():
     """)
     played_matches = cursor.fetchall()
 
+    cursor.execute('''
+    SELECT
+        players.player_id,
+        players.full_name,
+        teams.logo,
+    SUM(match_players.goals) AS total_goals
+FROM
+    players
+JOIN
+    teams_players ON players.player_id = teams_players.player_id
+JOIN
+    teams ON teams_players.id_team = teams.id_team
+JOIN
+    match_players ON players.player_id = match_players.player_id
+GROUP BY
+        players.player_id,
+        players.full_name
+    ORDER BY
+        total_goals DESC
+    LIMIT 6;
+''')
+    players = cursor.fetchall()
+
+    cursor.execute('''
+    SELECT
+        players.player_id,
+        players.full_name,
+        teams.logo,
+    SUM(match_players.assists) AS total_assists
+FROM
+    players
+JOIN
+    teams_players ON players.player_id = teams_players.player_id
+JOIN
+    teams ON teams_players.id_team = teams.id_team
+JOIN
+    match_players ON players.player_id = match_players.player_id
+GROUP BY
+        players.player_id,
+        players.full_name
+    ORDER BY
+        total_assists DESC
+    LIMIT 6;
+''')
+    playersa = cursor.fetchall()
+
+    query = '''
+    SELECT distinct teams.id_team, teams.team
+    FROM teams
+    JOIN matches ON teams.id_team = matches.teamA_id
+    WHERE matches.date > '2023-07-01'
+    Order by teams.id_team asc;
+    '''
+    cursor.execute(query)
+    teamsc = cursor.fetchall()
     # Zamknij połączenie z bazą danych
     conn.close()
 
     # Utwórz listę indeksów
     indexes = list(range(1, len(teams) + 1))
-
-    return render_template('main.html', user_type=user_type, teams=teams, indexes=indexes, upcoming_matches=upcoming_matches, played_matches=played_matches)
+    pindexes = list(range(1, len(players) + 1))
+    paindexes = list(range(1, len(playersa) + 1))
+    return render_template('main.html', user_type=user_type, teams=teams, teamsc=teamsc, indexes=indexes, upcoming_matches=upcoming_matches, played_matches=played_matches, username=username, players=players, pindexes=pindexes, playersa=playersa, paindexes=paindexes)
 
 @app.route('/teams')
 def display_teams():
@@ -135,6 +193,7 @@ def display_teams():
     conn = sqlite3.connect('football_teams.db')
     cursor = conn.cursor()
     user_type = session.get('user_type', 'guest')
+    username = session.get('username', '')
     # Wykonaj zapytanie SQL
     query = """
     SELECT
@@ -293,13 +352,15 @@ def display_teams():
     #Utwórz listę indeksów
     indexesh = list(range(1, len(teamsh) + 1))
 
-    return render_template('teams.html', teams=teams, user_type=user_type, teamsa=teamsa, teamsh=teamsh, indexes=indexes,indexesa=indexesa, indexesh=indexesh)
+    return render_template('teams.html', teams=teams, user_type=user_type, teamsa=teamsa, teamsh=teamsh, indexes=indexes,indexesa=indexesa, indexesh=indexesh, username=username)
 
 @app.route('/matches')
 def show_matches():
     # Połącz się z bazą danych
     conn = sqlite3.connect('football_teams.db')
     cursor = conn.cursor()
+    username = session.get('username', '')
+
     user_type = session.get('user_type', 'guest')
 
     
@@ -327,7 +388,7 @@ def show_matches():
     conn.close()
     
     # Przekaż dane do szablonu HTML i wyświetl go
-    return render_template('matches.html', upcoming_matches=upcoming_matches, user_type=user_type)
+    return render_template('matches.html', upcoming_matches=upcoming_matches, user_type=user_type, username=username)
 
 @app.route('/stats')
 def show_stats():
@@ -447,18 +508,69 @@ def login_register():
         username = request.form['username']
         password = request.form['password']
 
-        # Sprawdź, czy użytkownik istnieje w bazie danych i hasło jest poprawne
         conn = sqlite3.connect('football_teams.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT username, password, user_type FROM users WHERE username=?", (username,))
+        cursor.execute("SELECT password, user_type, confirmed FROM users WHERE username=?", (username,))
         user_data = cursor.fetchone()
         conn.close()
 
-        if user_data and password == user_data[1]:
-            # Ustaw sesję, aby oznaczyć użytkownika jako zalogowanego
-            session['username'] = username
-            session['user_type'] = user_data[2]
-            return redirect(url_for('show_main'))
+        if user_data:
+            hashed_password = user_data[0]
+
+            if bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
+                session['username'] = username
+                session['user_type'] = user_data[1]
+                
+                if user_data[2] != 1:  # Sprawdź wartość kolumny confirmed
+                    flash('Twoje konto oczekuje na akceptację.')
+                    return redirect(url_for('login_register'))
+                    
+                
+                return redirect(url_for('show_main'))
+
+        flash('Nieprawidłowa nazwa użytkownika lub hasło.')
+
+    return render_template('login_register.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['regUsername']  # Update to use 'regUsername'
+        password = request.form['regPassword']  # Update to use 'regPassword'
+        confirm_password = request.form['confirmPassword']  # Update to use 'confirmPassword'
+
+        # Sprawdzenie, czy wszystkie pola formularza są wypełnione
+        if not (username and password and confirm_password):
+            flash('Wszystkie pola są wymagane!')
+            return redirect(url_for('login_register'))
+
+        # Sprawdzenie, czy hasła się zgadzają
+        if password != confirm_password:
+            flash('Hasła nie pasują do siebie!')
+            return redirect(url_for('login_register'))
+
+        # Sprawdzenie, czy użytkownik o danej nazwie już istnieje w bazie danych
+        conn = sqlite3.connect('football_teams.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT username FROM users WHERE username=?", (username,))
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            conn.close()
+            flash('Nazwa użytkownika już istnieje. Wybierz inną nazwę.')
+            return redirect(url_for('login_register'))
+
+        # Haszowanie hasła przed zapisaniem go do bazy danych
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+        # Dodanie nowego użytkownika do bazy danych
+        cursor.execute("INSERT INTO users (username, password, user_type, confirmed) VALUES (?, ?, ?, ?)",
+                       (username, hashed_password.decode('utf-8'), 'user', False))
+        conn.commit()
+        conn.close()
+
+        flash('Pomyślnie zarejestrowano! Możesz się teraz zalogować.')
+        return redirect(url_for('login_register'))
 
     return render_template('login_register.html')
 
@@ -467,7 +579,8 @@ def admin():
     # Połącz się z bazą danych
     conn = sqlite3.connect('football_teams.db')
     cursor = conn.cursor()
-    
+    username = session.get('username', '')
+
     # Pobierz mecze nadchodzące
     cursor.execute("""SELECT matches.date, teamsA.team AS teamA, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
     FROM matches
@@ -480,17 +593,34 @@ def admin():
         ELSE 2
     END, 
     CAST(SUBSTR(matches.date, 4, 2) AS SIGNED),  -- Sortowanie miesiąca jako liczby
-    SUBSTR(matches.date, 1, 2) ASC;  -- Sortowanie dnia
+    SUBSTR(matches.date, 1, 2) ASC  -- Sortowanie dnia
+    LIMIT 20;
     """)
     upcoming_matches = cursor.fetchall()
 
+# Pobierz użytkowników oczekujących na akceptację
+    cursor.execute("SELECT * FROM users WHERE confirmed = 0")
+    users_waiting_approval = cursor.fetchall()
 
-    
+    # Pobierz użytkowników premium
+    cursor.execute("SELECT * FROM users WHERE user_type = 'user_premium'")
+    premium_users = cursor.fetchall()
+
+    # Pobierz wszystkich pozostałych użytkowników
+    cursor.execute("SELECT * FROM users WHERE confirmed = 1")
+    other_users = cursor.fetchall()
+
+    conn.close()
+
+                           
     # Zamknij połączenie z bazą danych
     conn.close()
     
     # Przekaż dane do szablonu HTML i wyświetl go
-    return render_template('admin.html', upcoming_matches=upcoming_matches)
+    return render_template('admin.html', upcoming_matches=upcoming_matches, username=username, users_waiting_approval=users_waiting_approval,
+                           premium_users=premium_users,
+                           other_users=other_users)
+    
 
 @app.route('/update')
 def update():
@@ -616,6 +746,7 @@ def show_wyniki():
     conn = sqlite3.connect('football_teams.db')
     cursor = conn.cursor()
     user_type = session.get('user_type', 'guest')
+    username = session.get('username', '')
 
     
          # Pobierz mecze rozegrane
@@ -636,7 +767,7 @@ def show_wyniki():
     conn.close()
     
     # Przekaż dane do szablonu HTML i wyświetl go
-    return render_template('wyniki.html', played_matches=played_matches, user_type=user_type)
+    return render_template('wyniki.html', played_matches=played_matches, user_type=user_type, username=username)
 
 @app.route('/h2h')
 def show_H2H():
@@ -1378,8 +1509,9 @@ def show_composition():
 
 @app.route('/archiwum')
 def archiwum():
+    username = session.get('username', '')
     user_type = session.get('user_type', 'guest')
-    return render_template('archiwum.html', user_type=user_type)
+    return render_template('archiwum.html', user_type=user_type, username=username)
 
 @app.route('/archiwum/sezon23-24')
 def sezon_23_24():
@@ -1804,6 +1936,129 @@ def show_statsA():
 
     # Wyświetl szablon HTML z danymi
     return render_template('statsA.html', teamA=teamA, teamB=teamB, stats=stats, match=match, logoA=logoA, logoB=logoB)
+@app.route('/get_teams', methods=['POST'])
+def get_teams():
+    team_id = request.json.get('teamId')  # Pobranie ID wybranej drużyny z żądania POST
+    print(team_id)
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+
+    query = '''
+    SELECT distinct teams.id_team, teams.team
+    FROM teams
+    JOIN matches ON teams.id_team = matches.teamA_id
+    WHERE matches.date > '2023-07-01' AND teams.id_team != ?
+    Order by teams.id_team asc;
+    '''
+    cursor.execute(query, (team_id))
+
+    results = cursor.fetchall()
+
+    teamsb = []  # Inicjalizacja listy graczy
+
+    # Przetwarzanie wyników zapytania i dodanie do listy players
+    for row in results:
+        player_data = {
+            'id': row[0],
+            'name': row[1],
+        }
+        teamsb.append(player_data)
+
+    # Zamykanie połączenia z bazą danych
+    conn.close()
+
+    return jsonify({'teamsb': teamsb}) 
+
+@app.route('/generate_charts', methods=['POST'])
+def generate_charts():
+    team_id = request.json.get('teamId')
+    team_id2 = request.json.get('teamId2')
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+
+    # Zapytanie SQL do pobrania liczby bramek zdobytych i straconych przez wybrane drużyny
+    query_teamA = f'''
+        SELECT
+            SUM(CASE
+                WHEN m.teamA_id = {team_id} THEN m.scoreA
+                ELSE m.scoreB
+            END) AS Goals_Scored,
+            SUM(CASE
+                WHEN m.teamA_id = {team_id} THEN m.scoreB
+                ELSE m.scoreA
+            END) AS Goals_Conceded
+        FROM matches m
+        WHERE m.teamA_id = {team_id} OR m.teamB_id = {team_id}
+    '''
+    
+    query_teamB = f'''
+        SELECT
+            SUM(CASE
+                WHEN m.teamA_id = {team_id2} THEN m.scoreA
+                ELSE m.scoreB
+            END) AS Goals_Scored,
+            SUM(CASE
+                WHEN m.teamA_id = {team_id2} THEN m.scoreB
+                ELSE m.scoreA
+            END) AS Goals_Conceded
+        FROM matches m
+        WHERE m.teamA_id = {team_id2} OR m.teamB_id = {team_id2}
+    '''
+
+    cursor.execute(query_teamA)
+    data_teamA = cursor.fetchone()
+
+    cursor.execute(query_teamB)
+    data_teamB = cursor.fetchone()
+
+    conn.close()
+
+    # Przygotowanie danych do wyświetlenia na wykresie kołowym dla drużyny A
+    bramki_zdobyte_A = data_teamA[0]
+    bramki_stracone_A = data_teamA[1]
+    data_for_pie_chart_A = {
+        'labels': ['Bramki Zdobyte', 'Bramki stracone'],
+        'values': [bramki_zdobyte_A, bramki_stracone_A]
+    }
+
+    # Przygotowanie danych do wyświetlenia na wykresie kołowym dla drużyny B
+    bramki_zdobyte_B = data_teamB[0]
+    bramki_stracone_B = data_teamB[1]
+    data_for_pie_chart_B = {
+        'labels': ['Bramki Zdobyte', 'Bramki stracone'],
+        'values': [bramki_zdobyte_B, bramki_stracone_B]
+    }
+
+    return jsonify({'teamA': data_for_pie_chart_A, 'teamB': data_for_pie_chart_B})
+
+@app.route('/handle_user_action', methods=['POST'])
+def handle_user_action():
+    if request.method == 'POST':
+        data = request.json  # Odbierz dane przesłane przez fetch
+        user_id = data.get('userId')
+        action = data.get('action')
+
+        # Połączenie z bazą danych
+        conn = sqlite3.connect('football_teams.db')
+        cursor = conn.cursor()
+
+        if action == 'x':
+            cursor.execute("DELETE FROM users WHERE id=?", (user_id,))
+            conn.commit()
+            conn.close()
+            return jsonify({'message': f'Użytkownik o ID {user_id} został usunięty'})
+
+        elif action == 'tick':
+            cursor.execute("UPDATE users SET confirmed=? WHERE id=?", (1, user_id))
+            conn.commit()
+            conn.close()
+            return jsonify({'message': f'Potwierdzono użytkownika o ID {user_id}'})
+
+        else:
+            conn.close()
+            return jsonify({'message': 'Niepoprawna akcja'})
+        
+    return redirect(url_for('admin'))  
 
 if __name__ == '__main__':
     app.run(debug=True)

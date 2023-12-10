@@ -1,25 +1,186 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Wyniki meczów</title>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin</title>
+    <!-- Dodaj link do Bootstrapa -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 
 <body>
 
-    <h2 onclick="toggleList('upcoming-list')">Nadchodzące mecze</h2>
-    <ul id="upcoming-list" class="">
-        {% for match in upcoming_matches %}
-        <li onclick="openStatsUMA('{{ match[5] }}','{{ match[0] }}' )">
-            {{ match[0] }}
-            <br>
-            <img src="{{ match[3] }}" alt="Logo drużyny" height="13em"> {{ match[1] }} -:- {{ match[2] }} <img
-                src="{{ match[4] }}" alt="Logo drużyny" height="13em">
-            <br>
-        </li>
-        {% endfor %}
-    </ul>
+    <header class="bg-dark text-danger p-3">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <a class="navbar-brand">{{username}}</a>
+
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <!-- Dodaj opcje dostępne tylko dla administratora -->
+                    <li class="nav-item"><a class="nav-link text-white" href="/">Main</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="/logout">Wyloguj się</a></li>
+
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+
+    <div class="main-menu">
+        <ul class="nav">
+            <li class="nav-item"><a class="nav-link-main text-light" onclick="showAdminUsers()">Użykwonicy</a></li>
+            <li class="nav-item"><a class="nav-link-main text-light" onclick="showAdminMatches()">Mecze</a></li>        
+        </ul>
+    </div>
+
+    <div class="container-fluid">
+
+
+
+        <header class="bg-dark text-danger p-3">
+           
+        </header>
+
+        <div class="container mt-4" id="adminUsers">
+            <div class="row">
+                <div class="col-md-6">
+                    <h3>Użytkownicy oczekujący na akceptację</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nazwa użytkownika</th>
+                                <th>Zaakceptuj</th>
+                                <th>Odrzuć</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users_waiting_approval %}
+                                <tr>
+                                    <td>{{ user[1] }}</td>
+                                    <td style="text-align: center;">
+                                        <img src="/static/green_tick.png" style="height: 20px;" class="accept" data-userid="{{ user[0] }}" alt="Zaakceptuj">
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <img src="/static/red_x.png" style="height: 20px;" class="reject" data-userid="{{ user[0] }}" alt="Odrzuć">
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    
+                    <h3>Użytkownicy premium</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nazwa użytkownika</th>
+                                <th>Data Ważności</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in premium_users %}
+                                <tr>
+                                    <td>{{ user[1] }}</td>
+                                    <td>{{ user[4] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h3>Pozostali użytkownicy</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nazwa użytkownika</th>
+                                <th>Typ użytkownika</th>
+                                <th>Data Ważności</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in other_users %}
+                                <tr>
+                                    <td>{{ user[1] }}</td>
+                                    <td>{{ user[3] }}</td>
+                                    <td>{{ user[4] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container mt-4" id="adminMatches" style="display: none;">
+            <ul id="upcoming-list">
+                {% for match in upcoming_matches %}
+                
+                <li class="list-group-item d-flex justify-content-between align-items-center"
+                onclick="openStatsUMA('{{ match[5] }}','{{ match[0] }}')" style="cursor: pointer;">
+                <div class="d-flex flex-column">
+                    <span>{{ match[0] }}</span>
+                    <span><img src="{{ match[3] }}" alt="Logo drużyny" height="25">    {{ match[1] }}</span>
+                    <span><img src="{{ match[4] }}" alt="Logo drużyny" height="25">    {{ match[2] }}</span>
+                </div>
+                <div class="d-flex flex-column">
+                    <span>&nbsp;</span>
+                    <span>-</span>
+                    <span>-</span>
+                </div>
+            </li>
+                    <br>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+    const acceptButtons = document.querySelectorAll('.accept');
+    const rejectButtons = document.querySelectorAll('.reject');
+
+    acceptButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const userId = this.getAttribute('data-userid');
+            handleUserAction(userId, 'tick'); // Zmieniamy akcję na 'tick' dla zaakceptowania
+        });
+    });
+
+    rejectButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const userId = this.getAttribute('data-userid');
+            handleUserAction(userId, 'x'); // Zmieniamy akcję na 'x' dla odrzucenia
+        });
+    });
+
+    function handleUserAction(userId, action) {
+    fetch('/handle_user_action', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId, action })
+    })
+    .then(response => {
+        location.reload(); // Odśwież stronę po udanej operacji
+    })
+    .catch(error => {
+        console.error('Błąd:', error);
+    });
+}
+            });
+        </script>
 </body>
 
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </html>

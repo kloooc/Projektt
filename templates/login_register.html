@@ -1,22 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Logowanie i rejestracja</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logowanie i Rejestracja</title>
+    <!-- Dodaj link do Bootstrapa -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
+
 <body>
-    <h1>Logowanie i rejestracja</h1>
 
-    <h2>Logowanie</h2>
-    <form method="post">
-        <label for="username">Nazwa użytkownika:</label>
-        <input type="text" id="username" name="username" required>
-        <br>
-        <label for="password">Hasło:</label>
-        <input type="password" id="password" name="password" required>
-        <br>
-        <input type="submit" value="Zaloguj">
-    </form>
+    <body>
+        <header class="bg-dark text-danger p-3">
+            <nav class="navbar navbar-expand-lg navbar-dark">
+                <a class="navbar-brand" href="/">Main</a>
 
 
-</body>
+
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarNav">
+                </div>
+            </nav>
+        </header>
+
+
+        <div class="container mt-4">
+            <div class="row">
+                <div class="col-md-5 border-right">
+                    <h2 style="text-align: center;">Logowanie</h2>
+                    <form method="post">
+                        <label for="username">Nazwa użytkownika:</label>
+                        <input type="text" id="username" name="username" required class="form-control">
+                        <br>
+                        <label for="password">Hasło:</label>
+                        <input type="password" id="password" name="password" required class="form-control">
+                        <br>
+                        <input type="submit" value="Zaloguj" class="btn btn-primary">
+                    </form>
+                </div>
+                <div class="col-md-1 d-flex align-items-center justify-content-center">
+                    <span class="border-left"></span>
+                </div>
+                <div class="col-md-6">
+                    <!-- Rejestracja -->
+                    <h2 style="text-align: center;">Rejestracja</h2>
+                    <!-- Formularz rejestracji -->
+                    <form id="registrationForm" method="post" action="{{ url_for('register') }}">
+                        <label for="regUsername">Nazwa użytkownika:</label>
+                        <input type="text" id="regUsername" name="regUsername" required class="form-control">
+                        <br>
+                        <label for="regPassword">Hasło:</label>
+                        <input type="password" id="regPassword" name="regPassword" required class="form-control">
+                        <br>
+                        <label for="confirmPassword">Powtórz hasło:</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required
+                            class="form-control">
+                        <span id="passwordMatch" class="text-success"></span>
+                        <br>
+                        <input type="submit" value="Zarejestruj" class="btn btn-success">
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="container mt-4">
+            <div class="row">
+                <div class="col-md-6 offset-md-3">
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <ul>
+                            {% for message in messages %}
+                            <li>{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const regPassword = document.getElementById('regPassword');
+                const confirmPassword = document.getElementById('confirmPassword');
+                const passwordMatch = document.getElementById('passwordMatch');
+                const registrationForm = document.getElementById('registrationForm');
+
+                confirmPassword.addEventListener('input', function () {
+                    if (confirmPassword.value === regPassword.value) {
+                        passwordMatch.textContent = 'Hasła są zgodne';
+                        passwordMatch.style.color = 'green';
+                    } else {
+                        passwordMatch.textContent = 'Hasła nie są zgodne';
+                        passwordMatch.style.color = 'red';
+                    }
+                });
+
+                registrationForm.addEventListener('submit', function (event) {
+                    if (!regPassword.value || !confirmPassword.value || !document.getElementById('regUsername').value) {
+                        event.preventDefault();
+                        alert('Proszę wypełnić wszystkie pola');
+                    }
+                });
+            });
+
+        </script>
+
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    </body>
+
 </html>

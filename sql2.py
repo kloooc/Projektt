@@ -4,20 +4,15 @@ import sqlite3
 conn = sqlite3.connect('football_teams.db')
 cursor = conn.cursor()
 
-cursor.execute("""
-    SELECT p.full_name
-    FROM players p
-    INNER JOIN match_players mp ON p.player_id = mp.player_id
-    INNER JOIN matches m ON mp.matchid = m.matchid
-    WHERE m.teamA_id = 2 AND mp.time_played > 0 AND m.matchid = 141
-    """)
+# Wykonanie zapytania SQL wybierającego wszystkie dane z tabeli users
+cursor.execute("SELECT * FROM users")
 
-# Pobranie wyników zapytania
-results = cursor.fetchall()
+# Pobranie wszystkich rekordów z wyniku zapytania
+users = cursor.fetchall()
 
-# Wyświetlenie wyników
-for row in results:
-    print(row[0])  # Wyświetlenie wartości z kolumny full_name
+# Wyświetlenie wszystkich rekordów z tabeli users
+for user in users:
+    print(user)
 
-# Zamknięcie połączenia z bazą danych
+# Zakończenie połączenia z bazą danych
 conn.close()

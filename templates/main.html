@@ -14,7 +14,7 @@
 <body>
     <header class="bg-dark text-danger p-3">
         <nav class="navbar navbar-expand-lg navbar-dark">
-            <a class="navbar-brand" href="/">Main</a>
+            <a class="navbar-brand">{{username}}</a>
 
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -28,7 +28,6 @@
                     </li>
                     {% elif user_type == 'user' %}
                     <!-- Dodaj opcje dostępne tylko dla użytkownika -->
-                    <li class="nav-item"><a class="nav-link text-white" href="/user_profile">Profil użytkownika</a></li>
                     <li class="nav-item"><a class="nav-link text-white" href="/logout">Wyloguj się</a></li>
                     {% elif user_type == 'admin' %}
                     <!-- Dodaj opcje dostępne tylko dla administratora -->
@@ -123,6 +122,93 @@
         <header class="bg-dark text-danger p-3">
             <!-- Zawartość nagłówka -->
         </header>
+        <div class="row">
+            <div class="col-md-9 table-container" style="margin-right: 20px;">
+                {% if user_type == 'guest' %}
+                <div class="login-info d-flex flex-column justify-content-center align-items-center">
+                    <div class="login-info-text">
+                        <p class="text-center">Wykresy dostępne tylko dla zalogowanych użytkowników.</p>
+                        <a href="/login_register" class="text-center">Logowanie/Rejestracja</a>
+                    </div>
+                </div>
+
+                {% else %}
+                <!-- Zawartość dla zalogowanych użytkowników -->
+                <div class="charts" style="text-align: center; margin-top: 20px;">
+                    <select id="teamSelect">
+                        {% for team in teamsc %}
+                        <option value="{{ team[0] }}">{{ team[1] }}</option>
+                        {% endfor %}
+                    </select>
+                    <select id="teamSelect2"></select>
+                    <div class="container" style="text-align: center; margin-top: 20px;">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <canvas id="myChartA" class="small-chart"></canvas>
+                            </div>
+                            <div class="col-md-4">
+                                <canvas id="myChart" class="small-chart"></canvas>
+                            </div>
+                            <div class="col-md-4">
+                                <canvas id="myChartB" class="small-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-md-3 table-container" style="margin-right: 20px;">
+                <ul class="nav">
+                    <li class="nav-item"><a class="nav-link-main text-light" onclick="showgoalsTable()">Gole</a></li>
+                    <li class="nav-item"><a class="nav-link-main text-light" onclick="showassistsTable()">Assysty</a>
+                    </li>
+                </ul>
+                <table class="table" style="width: 99%;" id="goalsTable">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Imie Nazwisko</th>
+                            <th>Goals</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for index in pindexes %}
+                        <tr>
+                            <td>{{ index }}</td>
+                            <td> <img src="{{ players[index-1][2] }}" alt="Logo drużyny" class="img-fluid"> {{
+                                players[index-1][1] }}</td>
+                            <td>{{ players[index-1][3] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <table class="table" style="width: 99%; display: none;" id="assistsTable">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Imie Nazwisko</th>
+                            <th>Assysty</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for index in paindexes %}
+                        <tr>
+                            <td>{{ index }}</td>
+                            <td> <img src="{{ playersa[index-1][2] }}" alt="Logo drużyny" class="img-fluid"> {{
+                                playersa[index-1][1] }}</td>
+                            <td>{{ playersa[index-1][3] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <header class="bg-dark text-danger p-3">
+            <!-- Zawartość nagłówka -->
+        </header>
 
         <div class="row custom-padding">
             <!-- Dodaj kafelki z rozegranymi meczami -->
@@ -140,6 +226,122 @@
             </div>
             {% endfor %}
         </div>
+        <script>
+            document.getElementById('teamSelect').addEventListener('change', function () {
+                var selectedTeamId = this.value;
+                fetch('/get_teams', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ teamId: selectedTeamId })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        var teamSelect2 = document.getElementById('teamSelect2');
+
+                        // Wyczyszczenie elementu <select> przed dodaniem nowych opcji
+                        teamSelect2.innerHTML = '';
+
+                        // Przechodzenie przez dane graczy i tworzenie opcji dla każdego gracza
+                        data.teamsb.forEach(function (teamsb) {
+                            var option = document.createElement('option');
+                            option.value = teamsb.id;
+                            option.textContent = teamsb.name; // Ustawianie tekstu opcji na pełne imię i nazwisko gracza
+                            teamSelect2.appendChild(option); // Dodawanie opcji do listy rozwijanej
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Błąd pobierania danych:', error);
+                    });
+            });
+            document.getElementById('teamSelect2').addEventListener('change', function () {
+                var selectedTeamId = document.getElementById('teamSelect').value;
+                var selectedTeam2Id = this.value;
+
+                // Znajdź istniejące wykresy na canvasach myChartA i myChartB, jeśli istnieją
+                var existingChartA = Chart.getChart("myChartA");
+                var existingChartB = Chart.getChart("myChartB");
+
+                // Jeśli istnieją, zniszcz wykresy, aby wyczyścić je przed utworzeniem nowych
+                if (existingChartA) {
+                    existingChartA.destroy();
+                }
+
+                if (existingChartB) {
+                    existingChartB.destroy();
+                }
+
+                fetch('/generate_charts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ teamId: selectedTeamId, teamId2: selectedTeam2Id })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        const canvasA = document.getElementById('myChartA');
+                        const ctxA = canvasA.getContext('2d');
+
+                        const canvasB = document.getElementById('myChartB');
+                        const ctxB = canvasB.getContext('2d');
+
+
+                        const myChartA = new Chart(ctxA, {
+                            type: 'pie',
+                            data: {
+                                labels: data.teamA.labels,
+                                datasets: [{
+                                    label: '',
+                                    data: data.teamA.values,
+                                    backgroundColor: [
+                                        'rgba(255, 99, 132, 0.5)',
+                                        'rgba(54, 162, 235, 0.5)'
+                                    ],
+                                    borderColor: [
+                                        'rgba(255, 99, 132, 1)',
+                                        'rgba(54, 162, 235, 1)'
+                                    ],
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                // Konfiguracja dodatkowych opcji, jeśli są potrzebne
+                            }
+                        });
+
+                        const myChartB = new Chart(ctxB, {
+                            type: 'pie',
+                            data: {
+                                labels: data.teamB.labels,
+                                datasets: [{
+                                    label: '',
+                                    data: data.teamB.values,
+                                    backgroundColor: [
+                                        'rgba(255, 99, 132, 0.5)',
+                                        'rgba(54, 162, 235, 0.5)'
+                                    ],
+                                    borderColor: [
+                                        'rgba(255, 99, 132, 1)',
+                                        'rgba(54, 162, 235, 1)'
+                                    ],
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                // Konfiguracja dodatkowych opcji, jeśli są potrzebne
+                            }
+                        });
+
+                        
+                    })
+                    .catch(error => {
+                        console.error('Błąd pobierania danych:', error);
+                    });
+            });
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
         <script src="{{ url_for('static', filename='script.js') }}"></script>
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

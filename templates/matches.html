@@ -11,8 +11,7 @@
 <body>
     <header class="bg-dark text-danger p-3">
         <nav class="navbar navbar-expand-lg navbar-dark">
-            <a class="navbar-brand" href="/">Main</a>
-    
+            <a class="navbar-brand">{{username}}</a>    
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -24,7 +23,6 @@
                     <li class="nav-item"><a class="nav-link text-white" href="/login_register">Logowanie/Rejestracja</a></li>
                     {% elif user_type == 'user' %}
                     <!-- Dodaj opcje dostępne tylko dla użytkownika -->
-                    <li class="nav-item"><a class="nav-link text-white" href="/user_profile">Profil użytkownika</a></li>
                     <li class="nav-item"><a class="nav-link text-white" href="/logout">Wyloguj się</a></li>
                     {% elif user_type == 'admin' %}
                     <!-- Dodaj opcje dostępne tylko dla administratora -->

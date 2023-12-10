@@ -91,6 +91,37 @@ function showHomeTable() {
     awayTable.style.display = "none";
     wholeTable.style.display = "none";
 }
+function showgoalsTable() {
+    var goalsTable = document.getElementById("goalsTable");
+    var assistsTable = document.getElementById("assistsTable");
+
+    goalsTable.style.display = "";
+    assistsTable.style.display = "none";
+}
+
+function showassistsTable() {
+    var goalsTable = document.getElementById("goalsTable");
+    var assistsTable = document.getElementById("assistsTable");
+
+    goalsTable.style.display = "none";
+    assistsTable.style.display = "";
+}
+
+function showAdminMatches() {
+    var adminUsers = document.getElementById("adminUsers");
+    var adminMatches = document.getElementById("adminMatches");
+
+    adminUsers.style.display = "none";
+    adminMatches.style.display = "";
+}
+
+function showAdminUsers() {
+    var adminUsers = document.getElementById("adminUsers");
+    var adminMatches = document.getElementById("adminMatches");
+
+    adminUsers.style.display = "";
+    adminMatches.style.display = "none";
+}
 
 function showAwayTable() {
     var homeTable = document.getElementById("homeTable");
