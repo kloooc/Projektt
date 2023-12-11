@@ -30,13 +30,27 @@
                     <a class="nav-link-main text-dark" onclick="showPlayerCompare('{{playera[0]}}')">Porównanie</a>
                 </li>
             </ul>
+            
         </div>
+        {% if user_type == 'guest' or user_type == 'user' %}
         <div class="row">
-
             <div class="col-md-12 mb-4" id="homeTable">
                 <header class="bg-dark text-danger p-3">
 
                 </header>
+                <div class="compare-info  d-flex flex-column justify-content-center align-items-center" >
+                    <div class="login-info-text">
+                        
+                        <p class="text-center">Wykresy dostępne tylko dla zalogowanych użytkowników premium.</p>
+                       
+                    </div>
+                </div>
+            </div>
+
+                {% else %}
+        <div class="row">
+
+           
 
 
                 <div class="col-md-12 mb-4" id="awayTable">
@@ -55,7 +69,7 @@
                     </div>
                 </div>
             </div>
-
+            {% endif %}            
             <script>
                 var ctx1 = document.getElementById('timeCanvas').getContext('2d');
                 var img1 = new Image();

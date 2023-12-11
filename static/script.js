@@ -142,3 +142,7 @@ function showWholeTable() {
     awayTable.style.display = "none";
     wholeTable.style.display = "";
 }
+function showMatchAnalysisArchive(matchID) {
+
+    window.location.href = '/prematchA?matchID=' + matchID; // Przekierowanie do strony analizy meczu
+}

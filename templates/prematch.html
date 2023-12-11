@@ -36,11 +36,11 @@
                 <ul class="nav container-fluid">
                     <li class="nav-item"><a class="nav-link-main text-dark"
                             onclick="openStats('{{ match[3] }}')">Statystyki</a></li>
-                    <li class="nav-item"><a class="nav-link-main text-dark" href="/teams">Skład</a></li>
+                    <li class="nav-item"><a class="nav-link-main text-dark" 
+                            onclick="openComposition('{{ match[3] }}')">Skład</a></li>
                     <li class="nav-item">
-                        <a class="nav-link-main text-dark" onclick="showMatchAnalysis('{{ match[3] }}')">Analiza przedmeczowa</a>
-                    </li>
-                    </li>
+                        <a class="nav-link-main text-dark" 
+                        onclick="showMatchAnalysis('{{ match[3] }}')">Analiza przedmeczowa</a></li>
                 </ul>
             </div>
             {% if teamA and teamB %}

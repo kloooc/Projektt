@@ -46,19 +46,53 @@
                     </li>
                 </ul>
             </div>
-            <h2>Zawodnicy drużyny {{ teamA }}</h2>
-            <ul>
-                {% for playerh in playerh %}
-                <li>{{ playerh[0] }}</li>
-                {% endfor %}
-            </ul>
+            <div class="container">
+                <div class="row">
+                    <!-- Kolumna dla drużyny A -->
+                    <div class="col-md-6">
+                        <h2>{{ teamA }}</h2>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Zawodnik</th>
+                                    <td></td>
 
-            <h2>Zawodnicy drużyny {{ teamB }}</h2>
-            <ul>
-                {% for playera in playera %}
-                <li>{{ playera[0] }}</li>
-                {% endfor %}
-            </ul>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for player in playerh %}
+                                <tr>
+                                    <td>{{ player[0] }}</td>
+                                    <td>{{ player[1] }}</td>
+
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+            
+                    <!-- Kolumna dla drużyny B -->
+                    <div class="col-md-6">
+                        <h2>{{ teamB }}</h2>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Zawodnik</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for player in playera %}
+                                <tr>
+                                    <td>{{ player[0] }}</td>
+                                    <td>{{ player[1] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Dodanie Bootstrap JS -->

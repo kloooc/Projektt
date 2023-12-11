@@ -1199,6 +1199,7 @@ def show_player():
 @app.route('/playercompare', methods=['GET', 'POST'])
 def show_playerCompare():
     playerID = request.args.get('playerID')
+    user_type = session.get('user_type', 'guest')
 
     if playerID is None:
         print('Brak playerID w zapytaniu!')
@@ -1302,7 +1303,7 @@ def show_playerCompare():
     cursor.execute(query)
     teams = cursor.fetchall()
 
-    return render_template('playercompare.html',playerID=playerID, player=player, playera=playera, time_played=time_played, teams=teams)
+    return render_template('playercompare.html',playerID=playerID, player=player, playera=playera, time_played=time_played, teams=teams, user_type=user_type)
 
 @app.route('/get_players', methods=['POST'])
 def get_players():
@@ -1397,10 +1398,13 @@ def get_player_data():
     if results_player_a and results_player_b:
         match_ids_a = [row[3] for row in results_player_a]
         unique_match_ids_a = sorted(set(match_ids_a))
+        match_ids_b = [row[3] for row in results_player_b]
+        unique_match_ids_b = sorted(set(match_ids_b))
         match_number_dict_a = {match_id: index + 1 for index, match_id in enumerate(unique_match_ids_a)}
+        match_number_dict_b = {match_id: index + 1 for index, match_id in enumerate(unique_match_ids_b)}
 
         match_numbers_a = [match_number_dict_a[row[3]] for row in results_player_a]
-
+        match_numbers_b = [match_number_dict_b[row[3]] for row in results_player_b]
         total_time_played_p1 = [0]  # Czas gry dla zawodnika A
         total_time_played_p2 = [0]  # Czas gry dla zawodnika B
 
@@ -1421,7 +1425,7 @@ def get_player_data():
         
         plt.figure(figsize=(8, 6))
         plt.plot(match_numbers_a, total_time_played_p1, label=player_name_a, linestyle='-')
-        plt.plot(match_numbers_a, total_time_played_p2, label=player_name_b, linestyle='-')
+        plt.plot(match_numbers_b, total_time_played_p2, label=player_name_b, linestyle='-')
 
         plt.title('Czas gry')
         plt.xlabel('Numer meczu')
@@ -1482,22 +1486,26 @@ def show_composition():
 
 
     cursor.execute("""
-        SELECT p.full_name
+        SELECT p.full_name, mp.time_played
         FROM players p
+        INNER JOIN player_positions pp ON p.player_id = pp.player_id
         INNER JOIN match_players mp ON p.player_id = mp.player_id
         INNER JOIN matches m ON mp.matchid = m.matchid
         INNER JOIN teams_players tp ON p.player_id = tp.player_id
         WHERE tp.id_team = ? AND mp.time_played > 0 AND m.matchid = ?
+        ORDER BY pp.position_id ASC;
         """, (teamA_id, matchID)) 
     playerh = cursor.fetchall()
 
     cursor.execute("""
-        SELECT p.full_name
+        SELECT p.full_name, mp.time_played
         FROM players p
+        INNER JOIN player_positions pp ON p.player_id = pp.player_id
         INNER JOIN match_players mp ON p.player_id = mp.player_id
         INNER JOIN matches m ON mp.matchid = m.matchid
         INNER JOIN teams_players tp ON p.player_id = tp.player_id
         WHERE tp.id_team = ? AND mp.time_played > 0 AND m.matchid = ?
+        ORDER BY pp.position_id ASC;
         """, (teamB_id, matchID)) 
     playera = cursor.fetchall()
 
@@ -2059,6 +2067,73 @@ def handle_user_action():
             return jsonify({'message': 'Niepoprawna akcja'})
         
     return redirect(url_for('admin'))  
+@app.route('/prematchA')
+def show_prematchA():
+    matchID = request.args.get('matchID')
 
+    if matchID is None:
+        print('Brak matchID w zapytaniu!')
+        # Możesz obsłużyć ten przypadek, np. przekierowując użytkownika gdzie indziej
+        return "Brak matchID"
+
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT date, scoreA, scoreB, matchID from matches where matchID=?",(matchID,))
+    match = cursor.fetchone()
+
+    cursor.execute("SELECT distinct teamsA.team AS teamA, teamsB.team AS teamB FROM matches INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team WHERE matchID = ?", (matchID,))
+    result = cursor.fetchone()
+    
+    if result is None:
+        print('Brak danych dla teamA i teamB')
+        return "Brak danych dla teamA i teamB"
+
+    teamA, teamB = result  # Przypisanie wartości do zmiennych teamA i teamB po pobraniu z bazy danych
+
+    cursor.execute("SELECT logo from teams where team=?", (teamA,))
+    logoA = cursor.fetchone()
+
+    cursor.execute("SELECT logo from teams where team=?", (teamB,))
+    logoB = cursor.fetchone()
+
+    cursor.execute("SELECT id_team FROM teams WHERE team = ?", (teamA,))
+    teamA_id = cursor.fetchone()[0]
+
+    cursor.execute("SELECT id_team FROM teams WHERE team = ?", (teamB,))
+    teamB_id = cursor.fetchone()[0]
+
+    cursor.execute("SELECT scoreA FROM matches WHERE teamA_id = ? AND scoreA IS NOT NULL", (teamA_id,))
+    scores_teamA = cursor.fetchall()
+
+    scores_teamA = [score[0] for score in scores_teamA if score[0] is not None]
+
+    print("Scores TeamA:", scores_teamA)
+
+    cursor.execute("SELECT scoreB FROM matches WHERE teamB_id = ? AND scoreB IS NOT NULL", (teamB_id,))
+    scores_teamB = cursor.fetchall()
+
+    scores_teamB = [score[0] for score in scores_teamB if score[0] is not None]
+
+    print("Scores TeamB:", scores_teamB)
+
+    lambda_teamA = max(0.1, sum(scores_teamA) / len(scores_teamA))
+    lambda_teamB = max(0.1, sum(scores_teamB) / len(scores_teamB))
+
+    print(lambda_teamA)
+    print(lambda_teamB)
+
+    szanse_teamA = [poisson(k, lambda_teamA) for k in range(4)]
+    szanse_teamB = [poisson(k, lambda_teamB) for k in range(4)]
+
+    print(szanse_teamA)
+    print(szanse_teamB)
+
+    # Oblicz średnią liczbę bramek dla drużyn
+    srednia_teamA = sum(scores_teamA) / len(scores_teamA)
+    srednia_teamB = sum(scores_teamB) / len(scores_teamB)
+
+    conn.close()
+    return render_template('prematchA.html', teamA=teamA, teamB=teamB, logoA=logoA, logoB=logoB, srednia_teamA=srednia_teamA, match=match, srednia_teamB=srednia_teamB, prawdopodobienstwa_teamA=szanse_teamA, prawdopodobienstwa_teamB=szanse_teamB)
 if __name__ == '__main__':
     app.run(debug=True)
