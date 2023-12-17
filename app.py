@@ -1,15 +1,11 @@
 
 import base64
-import hashlib
 import io
-import signal
-import sys
 import bcrypt
 from flask import Flask, flash, jsonify, render_template, request, redirect, url_for, session
 import sqlite3
 import subprocess
 from flask_session import Session
-import math
 from math import exp
 import atexit
 
