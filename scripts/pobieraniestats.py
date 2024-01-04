@@ -10,7 +10,7 @@ import sys
 driver = webdriver.Chrome()
 
 # Otwarcie strony z wynikami
-driver.get("https://www.flashscore.pl/mecz/KGgchU8S/#/szczegoly-meczu/statystyki-meczu/0")
+driver.get("https://www.flashscore.pl/mecz/h2BbQAQl/#/szczegoly-meczu/statystyki-meczu/0")
 
 # Poczekaj, aż strona się załaduje (możesz dostosować czas)
 driver.implicitly_wait(10)
@@ -70,9 +70,9 @@ for i, team_name in enumerate(teams):
     print(f"Drużyna {i+1}: {team_name}")
     
 # Przetwarzaj i wydrukowuj zawartość wszystkich znalezionych divów
-category_divs = soup.find_all('div', {'class': '_category_1ofrm_5'})
-home_divs = soup.find_all('div', {'class': '_value_rvaa1_5 _homeValue_rvaa1_10'})
-away_divs = soup.find_all('div', {'class': '_value_rvaa1_5 _awayValue_rvaa1_14'})
+category_divs = soup.find_all('div', {'class': '_category_1x9y9_5'})
+home_divs = soup.find_all('div', {'class': '_value_dmww2_5 _homeValue_dmww2_10'})
+away_divs = soup.find_all('div', {'class': '_value_dmww2_5 _awayValue_dmww2_14'})
 
 
 

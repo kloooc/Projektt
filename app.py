@@ -1640,7 +1640,7 @@ def sezon_22_23():
     ON
         t.id_team = m.teamA_id OR t.id_team = m.teamB_id
     WHERE
-        m.date BETWEEN '2022-07-20 00:00:00' AND '2023-05-28 00:00:00'
+        m.date BETWEEN '2022-07-15 00:00:00' AND '2023-05-28 00:00:00'
     GROUP BY
         t.id_team
     ORDER BY

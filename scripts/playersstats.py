@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 
 # Przygotowanie i otwarcie strony z informacjami o zawodniku
 driver = webdriver.Chrome()
-driver.get("https://www.flashscore.pl/zawodnik/toporkiewicz-krzysztof/SzJZMwBr/")
+driver.get("https://www.flashscore.pl/zawodnik/munoz-juan/pQKvmNzS/")
 time.sleep(3)
 
 # Kliknięcie przycisku "ZOBACZ WSZYSTKIE MECZE"
@@ -99,7 +99,7 @@ if matches_div:
                                     yellow_card = icons[3].text.strip() 
                                     red_card = icons[4].text.strip() 
                                     # Dodawanie danych meczu do listy matches_data
-                                    matches_data.append((match_id[0], 51, time_played, goals, assists, yellow_card, red_card))
+                                    matches_data.append((match_id[0], 180, time_played, goals, assists, yellow_card, red_card))
 
                                     print(f"time_played: {time_played}, goals: {goals}, assists: {assists}, yellow_card: {yellow_card}, red_card: {red_card}")
                                 absence = match.find_all('div', class_='lmTable__absence')
@@ -109,7 +109,7 @@ if matches_div:
                                     assists= 0
                                     yellow_card=0
                                     red_card=0
-                                    matches_data.append((match_id[0], 51, time_played, goals, assists, yellow_card, red_card))
+                                    matches_data.append((match_id[0], 180, time_played, goals, assists, yellow_card, red_card))
 
                                     print(f"time_played: {time_played}, goals: {goals}, assists: {assists}, yellow_card: {yellow_card}, red_card: {red_card}")
 
