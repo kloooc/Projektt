@@ -10,7 +10,7 @@ import sys
 driver = webdriver.Chrome()
 
 # Otwarcie strony z wynikami
-driver.get("https://www.flashscore.pl/mecz/h2BbQAQl/#/szczegoly-meczu/statystyki-meczu/0")
+driver.get("https://www.flashscore.pl/mecz/IPGmaljt/#/szczegoly-meczu/statystyki-meczu/0")
 
 # Poczekaj, aż strona się załaduje (możesz dostosować czas)
 driver.implicitly_wait(10)
@@ -114,7 +114,6 @@ next_match_id = max_match_id + 1 if max_match_id is not None else 1
 # Wstaw nowy rekord z uzyskanym matchID
 cursor.execute("INSERT INTO matches (matchID, teamA_id, teamB_id, date, scoreA, scoreB) VALUES (?, ?, ?, ?, ?, ?)",
                (next_match_id, teamA_id, teamB_id, new_date_obj, score[0], score[1]))
-
 # Zatwierdź zmiany w bazie danych
 conn.commit()
 

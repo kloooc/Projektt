@@ -2,45 +2,111 @@
 <html>
 
 <head>
-    <title>Statystyki Meczu</title>
+    <title>Aktualizacja Meczu</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Dodaj styl do dostosowania szerokości pól numerów */
+        .small-input {
+          width: 60px; /* Możesz dostosować tę wartość według potrzeb */
+        }
+        .small-input2 {
+          width: 222px; /* Możesz dostosować tę wartość według potrzeb */
+        }
+      </style>
 </head>
 
 <body>
-    <h1>Statystyki Meczu</h1>
+    <div class="container" >
+        <h1 class="text-center">Aktualizacja meczu</h1>
+      
+        <!-- Karty z informacjami o meczach -->
+        <div class="card">
+            <div class="card-body">
+              <form method="POST" action="{{ url_for('submit_form') }}">
+                <input type="hidden" name="matchID" value="{{ matchID }}">
+                <h5 class="card-title">Data: {{ date[0] }} <input type="datetime" class="form-control small-input2 form-control-sm" name="input1" required placeholder="2024-01-01 12:00:00">
+                    <button type="submit" class="btn btn-primary mt-3">Aktualizuj</button></h5>
+                
+              </form>
+              <form method="POST" action="/submit_form_score">
+                <div class="d-flex align-items-center justify-content-center">
+                  <img src="{{ logoA[0] }}" height="50"> 
+                  <input type="hidden" name="matchID" value="{{ matchID }}">
+                  <span class="mx-2">{{ teamA }}</span>
+                  <input type="number" class="form-control form-control-sm small-input mx-2" name="input1" required> - 
+                  <input type="number" class="form-control form-control-sm small-input mx-2" name="input2" required> 
+                  <span class="mx-2">{{ teamB }}</span>
+                
+                  <img src="{{ logoB[0] }}" height="50">
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Aktualizuj</button>
+            </form>
+            </div>
+          </div>
+        </div>
+      
 
-    <form method="POST" action="/download_stats">
-        <label for="link">Podaj link do statystyk:</label>
-        <input type="text" id="link" name="link" required>
-        <input type="submit" value="Pobierz">
-    </form>
+        <div class="container mt-4">
+            <form method="POST" action="/download_stats" class="mb-4">
+              <div class="form-group">
+                <label for="link">Aktualizacja webscrap:</label>
+                <input type="text" class="form-control" id="link" name="link" required>
+              </div>
+              <button type="submit" class="btn btn-primary">Pobierz</button>
+            </form>
 
-    <h1>Statystyki meczu</h1>
-    
-    <h2>{{ teamA }} vs {{ teamB }}</h2>
-    
-    <table>
-        <tr>
+
+            <label for="link">Aktualizacja reczna:</label>
+    <table class="table">
+        <thead>
+          <tr>
             <th>Kategoria</th>
             <th>{{ teamA }}</th>
             <th>{{ teamB }}</th>
-        </tr>
-        {% for stat in stats %}
-        <tr>
-            <form method="POST" action="/submit_form">
-            <td>{{ stat[0] }}</td>
-            <td>
-                <input type="number" id="{{ stat[0] }}" name="{{ stat[0] }}">
-            </td>
-            <td>
-                <input type="number" id="{{ stat[0] }}" name="{{ stat[0] }}">
-            </td>
-        </tr>
-        {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+            <form method="POST" action="/submit_form_cat">
+                <input type="hidden" name="matchID" value="{{ matchID }}">
+          {% for stat in statsu %}
+          <tr>
+              <td>{{ stat[0] }}</td>
+              <td>
+                <input type="number" class="form-control" name="inputh{{ stat[1] }}" required>
+              </td>
+              <td>
+                <input type="number" class="form-control" name="inputa{{ stat[1] }}" required>
+              </td>
+          </tr>
+          
+          {% endfor %}
+        </tbody>
+      </table>
+      <button type="submit" class="btn btn-primary">Dodaj</button>
+      </form>
+    </div>
+    <div class="container mt-4">
+    <table class="table table-bordered">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">{{ teamA }}</th>
+                <th scope="col">Kategoria</th>
+                <th scope="col">{{ teamB }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in stats %}
+            <tr>
+                <td>{{ stat[1] }}</td>
+                <td>{{ stat[0] }}</td>
+                <td>{{ stat[2] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
-    <input type="submit" value="Dodaj">
-        
-</form>
-
+    
+</div>
 </body>
 
 </html>

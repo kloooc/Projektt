@@ -29,6 +29,9 @@
                     {% elif user_type == 'user' %}
                     <!-- Dodaj opcje dostępne tylko dla użytkownika -->
                     <li class="nav-item"><a class="nav-link text-white" href="/logout">Wyloguj się</a></li>
+                    {% elif user_type == 'user_premium' %}
+                    <!-- Dodaj opcje dostępne tylko dla użytkownika -->
+                    <li class="nav-item"><a class="nav-link text-white" href="/logout">Wyloguj się</a></li>
                     {% elif user_type == 'admin' %}
                     <!-- Dodaj opcje dostępne tylko dla administratora -->
                     <li class="nav-item"><a class="nav-link text-white" href="/admin">Panel administratora</a></li>
@@ -307,7 +310,7 @@
                                 }]
                             },
                             options: {
-                                // Konfiguracja dodatkowych opcji, jeśli są potrzebne
+                                
                             }
                         });
 

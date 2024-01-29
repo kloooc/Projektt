@@ -1,19 +1,9 @@
-function openStatsUMA(matchID, matchDate) {
+function openStatsUMA(matchID) {
     console.log('Otwieram update.html dla matchID:', matchID);
 
-    var currentDate = new Date();
-    var day = matchDate.substring(0, 2); // Pobierz pierwsze dwa znaki
-    var month = matchDate.substring(3, 5); // Pobierz kolejne dwa znaki
-    var hour = matchDate.substring(7, 9); // Pobierz godzinę
-    var minute = matchDate.substring(10, 12); // Pobierz minutę
-
-
-    var matchDateTime = new Date(currentDate.getFullYear(), month - 1, day, hour, minute);
-    if (matchDateTime < currentDate) {
-        window.open('/update?matchID=' + matchID, 'update', 'width=800,height=800');
-    } else {
-        alert("Mecz jeszcze się nie odbył");
-    }
+    
+    window.open('/update?matchID=' + matchID, 'update', 'width=800,height=800');
+    
 
 
 }
@@ -110,17 +100,22 @@ function showassistsTable() {
 function showAdminMatches() {
     var adminUsers = document.getElementById("adminUsers");
     var adminMatches = document.getElementById("adminMatches");
+    var adminMatches1 = document.getElementById("adminMatches1");
 
     adminUsers.style.display = "none";
     adminMatches.style.display = "";
+    adminMatches1.style.display = "";
+
 }
 
 function showAdminUsers() {
     var adminUsers = document.getElementById("adminUsers");
     var adminMatches = document.getElementById("adminMatches");
+    var adminMatches1 = document.getElementById("adminMatches1");
 
     adminUsers.style.display = "";
     adminMatches.style.display = "none";
+    adminMatches1.style.display = "none";
 }
 
 function showAwayTable() {

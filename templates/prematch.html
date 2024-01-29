@@ -6,6 +6,34 @@
     <!-- Dodanie Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: center;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        td.win {
+            background-color: #90EE90; /* Zielony */
+        }
+
+        td.draw {
+            background-color: #d3d3d3; /* Szary */
+        }
+
+        td.loss {
+            background-color: #FFA07A; /* Jasnoczerwony */
+        }
+    </style>
 </head>
 
 <body>
@@ -43,11 +71,32 @@
                         onclick="showMatchAnalysis('{{ match[3] }}')">Analiza przedmeczowa</a></li>
                 </ul>
             </div>
-            {% if teamA and teamB %}
-
-
-            <p>Średnia liczba bramek drużyny {{ teamA }} z poprzednich meczy: {{ srednia_teamA|float|round(2) }}</p>
-            <p>Średnia liczba bramek drużyny {{ teamB }} z poprzednich meczy: {{ srednia_teamB|float|round(2) }}</p>
+            <header class="bg-dark text-danger p-3">
+    
+            </header>
+    
+        {% if teamA and teamB %}
+        
+        <p>Średnia liczba bramek drużyny {{ teamA }} z poprzednich meczy: {{ srednia_teamA|float|round(2) }}</p>
+        <p>Średnia liczba bramek drużyny {{ teamB }} z poprzednich meczy: {{ srednia_teamB|float|round(2) }}</p>
+    
+            <table class="table center-table">
+                <thead>
+                    <tr>
+                        <th>{{ teamA }}</th>
+                        <th>Remis</th>
+                        <th>{{ teamB }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="win" style="width: {{ (win_prob_teamA * 100)|round(2) }}%;">{{ (win_prob_teamA * 100)|round(2) }}%</td>
+                        <td class="draw" style="width: {{ (draw_prob * 100)|round(2) }}%;">{{ (draw_prob * 100)|round(2) }}%</td>
+                        <td class="loss" style="width: {{ (win_prob_teamB * 100)|round(2) }}%;">{{ (win_prob_teamB * 100)|round(2) }}%</td>
+                    </tr>
+                </tbody>
+            </table>
+    
     
             <div class="container">
                 <div class="row">

@@ -83,6 +83,7 @@
                             <tr>
                                 <th>Nazwa użytkownika</th>
                                 <th>Data Ważności</th>
+                                <th>Dezaktywuj</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -90,6 +91,9 @@
                                 <tr>
                                     <td>{{ user[1] }}</td>
                                     <td>{{ user[4] }}</td>
+                                    <td style="text-align: center;">
+                                        <img src="/static/red_x.png" style="height: 20px;" class="deactivate" data-userid="{{ user[0] }}" alt="Odrzuć">
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -102,7 +106,8 @@
                             <tr>
                                 <th>Nazwa użytkownika</th>
                                 <th>Typ użytkownika</th>
-                                <th>Data Ważności</th>
+                                <th>Aktywuj premium</th>
+                                <th>Usuń konto</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -110,7 +115,12 @@
                                 <tr>
                                     <td>{{ user[1] }}</td>
                                     <td>{{ user[3] }}</td>
-                                    <td>{{ user[4] }}</td>
+                                    <td style="text-align: center;">
+                                        <img src="/static/green_tick.png" style="height: 20px;" class="activate" data-userid="{{ user[0] }}" alt="Zaakceptuj">
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <img src="/static/red_x.png" style="height: 20px;" class="delete" data-userid="{{ user[0] }}" alt="Zaakceptuj">
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -118,13 +128,35 @@
                 </div>
             </div>
         </div>
+
+        <div class="container mt-4" id="adminMatches1" style="display: none;">
+            <ul id="upcoming-list">
+                {% for match in postponed_matches %}
+                
+                <li class="list-group-item d-flex justify-content-between align-items-center"
+                onclick="openStatsUMA('{{ match[5] }}')" style="cursor: pointer;">
+                <div class="d-flex flex-column">
+                    <span>{{ match[0] }}</span>
+                    <span><img src="{{ match[3] }}" alt="Logo drużyny" height="25">    {{ match[1] }}</span>
+                    <span><img src="{{ match[4] }}" alt="Logo drużyny" height="25">    {{ match[2] }}</span>
+                </div>
+                <div class="d-flex flex-column">
+                    <span>&nbsp;</span>
+                    <span>-</span>
+                    <span>-</span>
+                </div>
+            </li>
+                    <br>
+                {% endfor %}
+            </ul>
+        </div>
         
         <div class="container mt-4" id="adminMatches" style="display: none;">
             <ul id="upcoming-list">
                 {% for match in upcoming_matches %}
                 
                 <li class="list-group-item d-flex justify-content-between align-items-center"
-                onclick="openStatsUMA('{{ match[5] }}','{{ match[0] }}')" style="cursor: pointer;">
+                onclick="openStatsUMA('{{ match[5] }}')" style="cursor: pointer;">
                 <div class="d-flex flex-column">
                     <span>{{ match[0] }}</span>
                     <span><img src="{{ match[3] }}" alt="Logo drużyny" height="25">    {{ match[1] }}</span>
@@ -144,19 +176,42 @@
         <script>
             document.addEventListener('DOMContentLoaded', function () {
     const acceptButtons = document.querySelectorAll('.accept');
+    const activateButtons = document.querySelectorAll('.activate');
+    const deactivateButtons = document.querySelectorAll('.deactivate');
     const rejectButtons = document.querySelectorAll('.reject');
+    const deleteButtons = document.querySelectorAll('.delete');
 
     acceptButtons.forEach(button => {
         button.addEventListener('click', function () {
             const userId = this.getAttribute('data-userid');
-            handleUserAction(userId, 'tick'); // Zmieniamy akcję na 'tick' dla zaakceptowania
+            handleUserAction(userId, 'tick'); 
+        });
+    });
+
+    activateButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const userId = this.getAttribute('data-userid');
+            handleUserAction(userId, 'activate'); 
+        });
+    });
+
+    deactivateButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const userId = this.getAttribute('data-userid');
+            handleUserAction(userId, 'deactivate'); 
         });
     });
 
     rejectButtons.forEach(button => {
         button.addEventListener('click', function () {
             const userId = this.getAttribute('data-userid');
-            handleUserAction(userId, 'x'); // Zmieniamy akcję na 'x' dla odrzucenia
+            handleUserAction(userId, 'x'); 
+        });
+    });
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const userId = this.getAttribute('data-userid');
+            handleUserAction(userId, 'delete'); 
         });
     });
 

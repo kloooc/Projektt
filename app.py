@@ -1,6 +1,7 @@
 
 import base64
 import io
+import math
 import bcrypt
 from flask import Flask, flash, jsonify, render_template, request, redirect, url_for, session
 import sqlite3
@@ -8,7 +9,7 @@ import subprocess
 from flask_session import Session
 from math import exp
 import atexit
-
+from datetime import datetime, timedelta
 from matplotlib import pyplot as plt
 
 # Rejestracja funkcji do wywołania przed zakończeniem programu
@@ -365,14 +366,8 @@ def show_matches():
     FROM matches
     INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
     INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
-    WHERE matches.scoreA IS NULL AND matches.scoreB IS NULL
-        ORDER BY
-    CASE
-        WHEN SUBSTR(matches.date, 4, 2) IN ('10', '11', '12') THEN 1
-        ELSE 2
-    END, 
-    CAST(SUBSTR(matches.date, 4, 2) AS SIGNED),  -- Sortowanie miesiąca jako liczby
-    SUBSTR(matches.date, 1, 2) ASC;  -- Sortowanie dnia
+    WHERE matches.scoreA IS NULL AND matches.scoreB IS NULL and matches.date between "2023-00-01" and "2024-12-12"
+        ORDER BY matches.date asc;
     """)
     upcoming_matches = cursor.fetchall()
 
@@ -409,7 +404,7 @@ def show_stats():
         return "Mecz nie istnieje"
     
     # Pobierz statystyki meczu z bazy danych
-    cursor.execute("SELECT c.category_name, s.home_value, s.away_value FROM stats s JOIN categories c ON s.categoryid = c.categoryid WHERE s.match_id = ?", (matchID,))
+    cursor.execute("SELECT distinct c.category_name, s.home_value, s.away_value FROM stats s JOIN categories c ON s.categoryid = c.categoryid WHERE s.match_id = ?", (matchID,))
     stats = cursor.fetchall()
     
     cursor.execute("SELECT logo from teams where team=?",(teamA,))
@@ -447,6 +442,15 @@ def show_stats_upcoming():
 
     teamA, teamB = result
 
+    cursor.execute("SELECT date from matches where matchID=?",(matchID,))
+    match_date = cursor.fetchone()
+
+    if match_date:
+        match_date = match_date[0][:-3]
+    else:
+        print("Brak pasującej daty.")
+
+    print(match_date)
     cursor.execute("SELECT date, scoreA, scoreB, matchID from matches where matchID=?",(matchID,))
     match = cursor.fetchone()
 
@@ -491,9 +495,144 @@ def show_stats_upcoming():
     # Oblicz średnią liczbę bramek dla drużyn
     srednia_teamA = sum(scores_teamA) / len(scores_teamA)
     srednia_teamB = sum(scores_teamB) / len(scores_teamB)
+    number_of_last_matches = 10
+
+    query_teamA = """
+    SELECT
+        (SELECT Count()
+         FROM matches
+         WHERE teamA_id = ? AND scoreA > scoreB AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS winsA,
+        (SELECT Count()
+         FROM matches
+         WHERE teamA_id = ? AND scoreA = scoreB AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS drawsA,
+        (SELECT Count()
+         FROM matches
+         WHERE teamA_id = ? AND scoreA < scoreB AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS lossesA
+"""
+    # Wykonaj zapytanie dla drużyny A
+    cursor.execute(query_teamA, (teamA_id, match_date, number_of_last_matches, teamA_id, match_date, number_of_last_matches, teamA_id, match_date, number_of_last_matches))
+    resultA = cursor.fetchone()
+
+    # Wyniki zapytania
+    winsA = resultA[0]
+    drawsA = resultA[1]
+    lossesA = resultA[2]
+    ilosc_meczyA = winsA+drawsA+lossesA
+  
+    query_teamB = """
+    SELECT
+        (SELECT Count()
+         FROM matches
+         WHERE teamB_id = ? AND scoreB > scoreA AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS winsA,
+        (SELECT Count()
+         FROM matches
+         WHERE teamB_id = ? AND scoreA = scoreB AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS drawsA,
+        (SELECT Count()
+         FROM matches
+         WHERE teamB_id = ? AND scoreB < scoreA AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS lossesA
+"""
+    # Wykonaj zapytanie dla drużyny A
+    cursor.execute(query_teamB, (teamB_id, match_date, number_of_last_matches, teamB_id, match_date, number_of_last_matches, teamB_id, match_date, number_of_last_matches))
+    resultA = cursor.fetchone()
+
+    # Wyniki zapytania
+    winsB = resultA[0]
+    drawsB = resultA[1]
+    lossesB = resultA[2]
+    ilosc_meczyB = winsB+drawsB+lossesB
+
+    # Zapytanie SQL dla wyników meczów pomiędzy dwiema drużynami
+    query_between_teams = """
+    SELECT COUNT(*)
+    FROM matches
+    WHERE 
+        ((teamA_id = ? AND teamB_id = ? AND scoreA > scoreB)
+        OR
+        (teamA_id = ? AND teamB_id = ? AND scoreA < scoreB))
+        AND scoreA IS NOT NULL
+        AND scoreB IS NOT NULL
+        AND date < ?
+"""
+
+    cursor.execute(query_between_teams, (teamA_id, teamB_id, teamB_id, teamA_id, match_date))
+    result = cursor.fetchone()
+    winsAB = result[0]
+
+    query_between_teams = """
+    SELECT COUNT(*)
+    FROM matches
+    WHERE 
+        ((teamA_id = ? AND teamB_id = ? AND scoreB > scoreA)
+        OR
+        (teamA_id = ? AND teamB_id = ? AND scoreB < scoreA))
+        AND scoreA IS NOT NULL
+        AND scoreB IS NOT NULL
+        AND date < ?
+"""
+
+    cursor.execute(query_between_teams, (teamA_id, teamB_id, teamB_id, teamA_id, match_date))
+    result = cursor.fetchone()
+    winsBA = result[0]
+
+    query_between_teams = """
+    SELECT COUNT(*)
+    FROM matches
+    WHERE 
+        ((teamA_id = ? AND teamB_id = ? AND scoreB = scoreA)
+        OR
+        (teamA_id = ? AND teamB_id = ? AND scoreB = scoreA))
+        AND scoreA IS NOT NULL
+        AND scoreB IS NOT NULL
+        AND date < ?
+"""
+
+    cursor.execute(query_between_teams, (teamA_id, teamB_id, teamB_id, teamA_id, match_date))
+    result = cursor.fetchone()
+    drawsAB = result[0]
+
+    query_between_teams = """
+    SELECT COUNT(*)
+    FROM matches
+    WHERE 
+        ((teamA_id = ? AND teamB_id = ?)
+        OR
+        (teamA_id = ? AND teamB_id = ?))
+        AND scoreA IS NOT NULL
+        AND scoreB IS NOT NULL
+        AND date < ?
+"""
+
+    cursor.execute(query_between_teams, (teamA_id, teamB_id, teamB_id, teamA_id, match_date))
+    result = cursor.fetchone()
+    ilosc_meczyAB = result[0]
+
+    
+    print(winsAB, winsBA, drawsAB, ilosc_meczyAB)
+
+    win_prob_teamA, draw_prob, win_prob_teamB = predicted_probabilities(
+        winsA, winsAB, winsBA, winsB, ilosc_meczyA, ilosc_meczyAB, ilosc_meczyB, drawsA, drawsAB, drawsB
+    )
+
+
+    # Wyświetl wyniki
+    print(f"Przewidywane prawdopodobieństwo dla: Wygrana {win_prob_teamA * 100:.2f}%, Remis {draw_prob * 100:.2f}%, Przegrana {win_prob_teamB * 100:.2f}%")
+
+
 
     conn.close()
-    return render_template('statsUP.html', teamA=teamA, teamB=teamB, logoA=logoA, match=match, logoB=logoB, srednia_teamA=srednia_teamA, srednia_teamB=srednia_teamB, prawdopodobienstwa_teamA=szanse_teamA, prawdopodobienstwa_teamB=szanse_teamB)
+    return render_template('statsUP.html',win_prob_teamA=win_prob_teamA, draw_prob=draw_prob, win_prob_teamB=win_prob_teamB, teamA=teamA, teamB=teamB, logoA=logoA, match=match, logoB=logoB, srednia_teamA=srednia_teamA, srednia_teamB=srednia_teamB, prawdopodobienstwa_teamA=szanse_teamA, prawdopodobienstwa_teamB=szanse_teamB)
 
 
 
@@ -582,18 +721,18 @@ def admin():
     FROM matches
     INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
     INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
-    WHERE matches.scoreA IS NULL AND matches.scoreB IS NULL
-        ORDER BY
-    CASE
-        WHEN SUBSTR(matches.date, 4, 2) IN ('10', '11', '12') THEN 1
-        ELSE 2
-    END, 
-    CAST(SUBSTR(matches.date, 4, 2) AS SIGNED),  -- Sortowanie miesiąca jako liczby
-    SUBSTR(matches.date, 1, 2) ASC  -- Sortowanie dnia
-    LIMIT 20;
+    WHERE matches.scoreA IS NULL AND matches.scoreB IS NULL and matches.date != 'przelozony'
+        ORDER BY matches.date ASC;
     """)
     upcoming_matches = cursor.fetchall()
-
+    cursor.execute("""SELECT matches.date, teamsA.team AS teamA, teamsB.team AS teamB, teamsA.logo AS logoA, teamsB.logo AS logoB, matches.matchID
+    FROM matches
+    INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
+    INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
+    WHERE matches.scoreA IS NULL AND matches.scoreB IS NULL and matches.date = 'przelozony'
+        ORDER BY matches.date ASC;
+    """)
+    postponed_matches = cursor.fetchall()
 # Pobierz użytkowników oczekujących na akceptację
     cursor.execute("SELECT * FROM users WHERE confirmed = 0")
     users_waiting_approval = cursor.fetchall()
@@ -603,7 +742,7 @@ def admin():
     premium_users = cursor.fetchall()
 
     # Pobierz wszystkich pozostałych użytkowników
-    cursor.execute("SELECT * FROM users WHERE confirmed = 1")
+    cursor.execute("SELECT * FROM users WHERE confirmed = 1 And user_type = 'user'")
     other_users = cursor.fetchall()
 
     conn.close()
@@ -613,7 +752,7 @@ def admin():
     conn.close()
     
     # Przekaż dane do szablonu HTML i wyświetl go
-    return render_template('admin.html', upcoming_matches=upcoming_matches, username=username, users_waiting_approval=users_waiting_approval,
+    return render_template('admin.html', upcoming_matches=upcoming_matches,postponed_matches=postponed_matches, username=username, users_waiting_approval=users_waiting_approval,
                            premium_users=premium_users,
                            other_users=other_users)
     
@@ -639,16 +778,30 @@ def update():
         return "Brak meczu o podanym matchID"
 
     teamA, teamB = result
+    cursor.execute("SELECT date from matches where matchID=?",(matchID,))
+    date = cursor.fetchone()
+
+    
 
     # Pobierz statystyki meczu z bazy danych
-    cursor.execute("SELECT distinct category FROM stats ")
+    cursor.execute("SELECT distinct categories.category_name, categories.categoryid FROM categories INNER JOIN stats ON categories.categoryid = stats.categoryid")
+    statsu = cursor.fetchall()
+
+
+    cursor.execute("SELECT logo from teams where team=?", (teamA,))
+    logoA = cursor.fetchone()
+
+    cursor.execute("SELECT logo from teams where team=?", (teamB,))
+    logoB = cursor.fetchone()
+
+    cursor.execute("SELECT distinct c.category_name, s.home_value, s.away_value FROM stats s JOIN categories c ON s.categoryid = c.categoryid WHERE s.match_id = ?", (matchID,))
     stats = cursor.fetchall()
-    
+        
     # Zamknij połączenie z bazą danych
     conn.close()
 
     
-    return render_template('update.html',teamA=teamA, teamB=teamB,stats=stats)
+    return render_template('update.html',matchID=matchID,date=date,statsu=statsu, logoA=logoA, logoB=logoB ,teamA=teamA, teamB=teamB,stats=stats)
 
 @app.route('/download_stats', methods=['POST'])
 def download_stats():
@@ -679,29 +832,39 @@ def show_prematch():
     conn = sqlite3.connect('football_teams.db')
     cursor = conn.cursor()
 
-    cursor.execute("SELECT date, scoreA, scoreB, matchID from matches where matchID=?",(matchID,))
-    match = cursor.fetchone()
-
     cursor.execute("SELECT distinct teamsA.team AS teamA, teamsB.team AS teamB FROM matches INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team WHERE matchID = ?", (matchID,))
     result = cursor.fetchone()
-    
+
     if result is None:
-        print('Brak danych dla teamA i teamB')
-        return "Brak danych dla teamA i teamB"
+        print('Brak meczu o podanym matchID!')
+        # Możesz obsłużyć ten przypadek, np. przekierowując użytkownika gdzie indziej
+        return "Brak meczu o podanym matchID"
 
-    teamA, teamB = result  # Przypisanie wartości do zmiennych teamA i teamB po pobraniu z bazy danych
+    teamA, teamB = result
 
-    cursor.execute("SELECT logo from teams where team=?", (teamA,))
-    logoA = cursor.fetchone()
+    cursor.execute("SELECT date from matches where matchID=?",(matchID,))
+    match_date = cursor.fetchone()
 
-    cursor.execute("SELECT logo from teams where team=?", (teamB,))
-    logoB = cursor.fetchone()
+    if match_date:
+        match_date = match_date[0][:-3]
+    else:
+        print("Brak pasującej daty.")
+
+    print(match_date)
+    cursor.execute("SELECT date, scoreA, scoreB, matchID from matches where matchID=?",(matchID,))
+    match = cursor.fetchone()
 
     cursor.execute("SELECT id_team FROM teams WHERE team = ?", (teamA,))
     teamA_id = cursor.fetchone()[0]
 
     cursor.execute("SELECT id_team FROM teams WHERE team = ?", (teamB,))
     teamB_id = cursor.fetchone()[0]
+
+    cursor.execute("SELECT logo from teams where team=?", (teamA,))
+    logoA = cursor.fetchone()
+
+    cursor.execute("SELECT logo from teams where team=?", (teamB,))
+    logoB = cursor.fetchone()
 
     cursor.execute("SELECT scoreA FROM matches WHERE teamA_id = ? AND scoreA IS NOT NULL", (teamA_id,))
     scores_teamA = cursor.fetchall()
@@ -732,9 +895,138 @@ def show_prematch():
     # Oblicz średnią liczbę bramek dla drużyn
     srednia_teamA = sum(scores_teamA) / len(scores_teamA)
     srednia_teamB = sum(scores_teamB) / len(scores_teamB)
+    number_of_last_matches = 10
+
+    query_teamA = """
+    SELECT
+        (SELECT Count()
+         FROM matches
+         WHERE teamA_id = ? AND scoreA > scoreB AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS winsA,
+        (SELECT Count()
+         FROM matches
+         WHERE teamA_id = ? AND scoreA = scoreB AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS drawsA,
+        (SELECT Count()
+         FROM matches
+         WHERE teamA_id = ? AND scoreA < scoreB AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS lossesA
+"""
+    # Wykonaj zapytanie dla drużyny A
+    cursor.execute(query_teamA, (teamA_id, match_date, number_of_last_matches, teamA_id, match_date, number_of_last_matches, teamA_id, match_date, number_of_last_matches))
+    resultA = cursor.fetchone()
+
+    # Wyniki zapytania
+    winsA = resultA[0]
+    drawsA = resultA[1]
+    lossesA = resultA[2]
+    ilosc_meczyA = winsA+drawsA+lossesA
+  
+    query_teamB = """
+    SELECT
+        (SELECT Count()
+         FROM matches
+         WHERE teamB_id = ? AND scoreB > scoreA AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS winsA,
+        (SELECT Count()
+         FROM matches
+         WHERE teamB_id = ? AND scoreA = scoreB AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS drawsA,
+        (SELECT Count()
+         FROM matches
+         WHERE teamB_id = ? AND scoreB < scoreA AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS lossesA
+"""
+    # Wykonaj zapytanie dla drużyny A
+    cursor.execute(query_teamB, (teamB_id, match_date, number_of_last_matches, teamB_id, match_date, number_of_last_matches, teamB_id, match_date, number_of_last_matches))
+    resultA = cursor.fetchone()
+
+    # Wyniki zapytania
+    winsB = resultA[0]
+    drawsB = resultA[1]
+    lossesB = resultA[2]
+    ilosc_meczyB = winsB+drawsB+lossesB
+
+    # Zapytanie SQL dla wyników meczów pomiędzy dwiema drużynami
+    query_between_teams = """
+    SELECT COUNT(*)
+    FROM matches
+    WHERE 
+        ((teamA_id = ? AND teamB_id = ? AND scoreA > scoreB)
+        OR
+        (teamA_id = ? AND teamB_id = ? AND scoreA < scoreB))
+        AND scoreA IS NOT NULL
+        AND scoreB IS NOT NULL
+        AND date < ?
+"""
+
+    cursor.execute(query_between_teams, (teamA_id, teamB_id, teamB_id, teamA_id, match_date))
+    result = cursor.fetchone()
+    winsAB = result[0]
+
+    query_between_teams = """
+    SELECT COUNT(*)
+    FROM matches
+    WHERE 
+        ((teamA_id = ? AND teamB_id = ? AND scoreB > scoreA)
+        OR
+        (teamA_id = ? AND teamB_id = ? AND scoreB < scoreA))
+        AND scoreA IS NOT NULL
+        AND scoreB IS NOT NULL
+        AND date < ?
+"""
+
+    cursor.execute(query_between_teams, (teamA_id, teamB_id, teamB_id, teamA_id, match_date))
+    result = cursor.fetchone()
+    winsBA = result[0]
+
+    query_between_teams = """
+    SELECT COUNT(*)
+    FROM matches
+    WHERE 
+        ((teamA_id = ? AND teamB_id = ? AND scoreB = scoreA)
+        OR
+        (teamA_id = ? AND teamB_id = ? AND scoreB = scoreA))
+        AND scoreA IS NOT NULL
+        AND scoreB IS NOT NULL
+        AND date < ?
+"""
+
+    cursor.execute(query_between_teams, (teamA_id, teamB_id, teamB_id, teamA_id, match_date))
+    result = cursor.fetchone()
+    drawsAB = result[0]
+
+    query_between_teams = """
+    SELECT COUNT(*)
+    FROM matches
+    WHERE 
+        ((teamA_id = ? AND teamB_id = ?)
+        OR
+        (teamA_id = ? AND teamB_id = ?))
+        AND scoreA IS NOT NULL
+        AND scoreB IS NOT NULL
+        AND date < ?
+"""
+
+    cursor.execute(query_between_teams, (teamA_id, teamB_id, teamB_id, teamA_id, match_date))
+    result = cursor.fetchone()
+    ilosc_meczyAB = result[0]
+
+    
+    print(winsAB, winsBA, drawsAB, ilosc_meczyAB)
+
+    win_prob_teamA, draw_prob, win_prob_teamB = predicted_probabilities(
+        winsA, winsAB, winsBA, winsB, ilosc_meczyA, ilosc_meczyAB, ilosc_meczyB, drawsA, drawsAB, drawsB
+    )
 
     conn.close()
-    return render_template('prematch.html', teamA=teamA, teamB=teamB, logoA=logoA, logoB=logoB, srednia_teamA=srednia_teamA, match=match, srednia_teamB=srednia_teamB, prawdopodobienstwa_teamA=szanse_teamA, prawdopodobienstwa_teamB=szanse_teamB)
+    return render_template('prematch.html',win_prob_teamA= win_prob_teamA, draw_prob=draw_prob, win_prob_teamB=win_prob_teamB, teamA=teamA, teamB=teamB, logoA=logoA, logoB=logoB, srednia_teamA=srednia_teamA, match=match, srednia_teamB=srednia_teamB, prawdopodobienstwa_teamA=szanse_teamA, prawdopodobienstwa_teamB=szanse_teamB)
     
 @app.route('/wyniki')
 def show_wyniki():
@@ -1050,7 +1342,7 @@ def show_teamWyniki():
     INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
     WHERE NOT (matches.scoreA IS NULL AND matches.scoreB IS NULL) AND (matches.teamA_id = ? or matches.teamB_id=?)
     ORDER BY
-        matches.date;
+        matches.date DESC;
     """, (teamID, teamID))
     played_matches = cursor.fetchall()
 
@@ -1661,7 +1953,7 @@ def sezon_22_23():
     FROM matches
     INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
     INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
-    WHERE matches.date BETWEEN '2022-07-20 00:00:00' AND '2023-05-28 00:00:00'
+    WHERE matches.date BETWEEN '2022-07-15 00:00:00' AND '2023-05-28 00:00:00'
     ORDER BY
         matches.date DESC
     """)
@@ -1717,7 +2009,7 @@ def sezon_21_22():
     ON
         t.id_team = m.teamA_id OR t.id_team = m.teamB_id
     WHERE
-        m.date BETWEEN '2021-07-20 00:00:00' AND '2022-05-26 00:00:00'
+        m.date BETWEEN '2021-07-20 00:00:00' AND '2022-05-22 00:00:00'
     GROUP BY
         t.id_team
     ORDER BY
@@ -1738,7 +2030,7 @@ def sezon_21_22():
     FROM matches
     INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
     INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
-    WHERE matches.date BETWEEN '2021-07-20 00:00:00' AND '2022-05-26 00:00:00'
+    WHERE matches.date BETWEEN '2021-07-20 00:00:00' AND '2022-05-22 00:00:00'
     ORDER BY
         matches.date DESC
     """)
@@ -2057,12 +2349,35 @@ def handle_user_action():
             conn.commit()
             conn.close()
             return jsonify({'message': f'Potwierdzono użytkownika o ID {user_id}'})
+        
+        elif action == 'activate':
+            expiration_date = datetime.now() + timedelta(days=30)  # Miesiąc od dzisiaj
+            cursor.execute("UPDATE users SET user_type=?, premium_expiration_date=? WHERE id=?",
+                        ('user_premium', expiration_date.strftime('%Y-%m-%d'), user_id))
+            conn.commit()
+            conn.close()
+            return jsonify({'message': f'Potwierdzono użytkownika o ID {user_id}'})
+        
+        elif action == 'deactivate':
+            cursor.execute("UPDATE users SET user_type=?, premium_expiration_date=? WHERE id=?",
+                        ('user', None, user_id))
+            conn.commit()
+            conn.close()
+            return jsonify({'message': f'Potwierdzono użytkownika o ID {user_id}'})
+        
+        elif action == 'delete':
+            cursor.execute("Delete from users WHERE id=?",
+                        (user_id))
+            conn.commit()
+            conn.close()
+            return jsonify({'message': f'Potwierdzono użytkownika o ID {user_id}'})
 
         else:
             conn.close()
             return jsonify({'message': 'Niepoprawna akcja'})
         
     return redirect(url_for('admin'))  
+
 @app.route('/prematchA')
 def show_prematchA():
     matchID = request.args.get('matchID')
@@ -2099,6 +2414,9 @@ def show_prematchA():
     cursor.execute("SELECT id_team FROM teams WHERE team = ?", (teamB,))
     teamB_id = cursor.fetchone()[0]
 
+    cursor.execute("SELECT date from matches where matchID=?",(matchID,))
+    match_date=cursor.fetchone()
+
     cursor.execute("SELECT scoreA FROM matches WHERE teamA_id = ? AND scoreA IS NOT NULL", (teamA_id,))
     scores_teamA = cursor.fetchall()
 
@@ -2129,7 +2447,208 @@ def show_prematchA():
     srednia_teamA = sum(scores_teamA) / len(scores_teamA)
     srednia_teamB = sum(scores_teamB) / len(scores_teamB)
 
+    number_of_last_matches = 10
+
+    query_teamA = """
+    SELECT
+        (SELECT Count()
+         FROM matches
+         WHERE teamA_id = ? AND scoreA > scoreB AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS winsA,
+        (SELECT Count()
+         FROM matches
+         WHERE teamA_id = ? AND scoreA = scoreB AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS drawsA,
+        (SELECT Count()
+         FROM matches
+         WHERE teamA_id = ? AND scoreA < scoreB AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS lossesA
+"""
+    # Wykonaj zapytanie dla drużyny A
+    cursor.execute(query_teamA, (teamA_id, match_date, number_of_last_matches, teamA_id, match_date, number_of_last_matches, teamA_id, match_date, number_of_last_matches))
+    resultA = cursor.fetchone()
+
+    # Wyniki zapytania
+    winsA = resultA[0]
+    drawsA = resultA[1]
+    lossesA = resultA[2]
+    ilosc_meczyA = winsA+drawsA+lossesA
+
+    query_teamB = """
+    SELECT
+        (SELECT Count()
+         FROM matches
+         WHERE teamB_id = ? AND scoreB > scoreA AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS winsA,
+        (SELECT Count()
+         FROM matches
+         WHERE teamB_id = ? AND scoreA = scoreB AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS drawsA,
+        (SELECT Count()
+         FROM matches
+         WHERE teamB_id = ? AND scoreB < scoreA AND date < ?
+         ORDER BY date DESC
+         LIMIT ?) AS lossesA
+"""
+    # Wykonaj zapytanie dla drużyny A
+    cursor.execute(query_teamB, (teamB_id, match_date, number_of_last_matches, teamB_id, match_date, number_of_last_matches, teamB_id, match_date, number_of_last_matches))
+    resultA = cursor.fetchone()
+
+    # Wyniki zapytania
+    winsB = resultA[0]
+    drawsB = resultA[1]
+    lossesB = resultA[2]
+    ilosc_meczyB = winsB+drawsB+lossesB
+
+
+    # Zapytanie SQL dla wyników meczów pomiędzy dwiema drużynami
+    query_between_teams = """
+    SELECT COUNT(*)
+    FROM matches
+    WHERE 
+        ((teamA_id = ? AND teamB_id = ? AND scoreA > scoreB)
+        OR
+        (teamA_id = ? AND teamB_id = ? AND scoreA < scoreB))
+        AND scoreA IS NOT NULL
+        AND scoreB IS NOT NULL
+        AND date < ?
+"""
+
+    cursor.execute(query_between_teams, (teamA_id, teamB_id, teamB_id, teamA_id, match_date))
+    winsAB = cursor.fetchone()
+
+
+    query_between_teams = """
+    SELECT COUNT(*)
+    FROM matches
+    WHERE 
+        ((teamA_id = ? AND teamB_id = ? AND scoreB > scoreA)
+        OR
+        (teamA_id = ? AND teamB_id = ? AND scoreB < scoreA))
+        AND scoreA IS NOT NULL
+        AND scoreB IS NOT NULL
+        AND date < ?
+"""
+
+    cursor.execute(query_between_teams, (teamA_id, teamB_id, teamB_id, teamA_id, match_date))
+    winsBA = cursor.fetchone()
+
+    query_between_teams = """
+    SELECT COUNT(*)
+    FROM matches
+    WHERE 
+        ((teamA_id = ? AND teamB_id = ? AND scoreB = scoreA)
+        OR
+        (teamA_id = ? AND teamB_id = ? AND scoreB = scoreA))
+        AND scoreA IS NOT NULL
+        AND scoreB IS NOT NULL
+        AND date < ?
+"""
+
+    cursor.execute(query_between_teams, (teamA_id, teamB_id, teamB_id, teamA_id, match_date))
+    drawsAB = cursor.fetchone()
+
+    query_between_teams = """
+    SELECT COUNT(*)
+    FROM matches
+    WHERE 
+        ((teamA_id = ? AND teamB_id = ?)
+        OR
+        (teamA_id = ? AND teamB_id = ?))
+        AND scoreA IS NOT NULL
+        AND scoreB IS NOT NULL
+        AND date < ?
+"""
+
+    cursor.execute(query_between_teams, (teamA_id, teamB_id, teamB_id, teamA_id, match_date))
+    ilosc_meczyAB = cursor.fetchone()
+
+    win_prob_teamA, draw_prob, win_prob_teamB = predicted_probabilities(
+        winsA, winsAB, winsBA, winsB, ilosc_meczyA, ilosc_meczyAB, ilosc_meczyB, drawsA, drawsAB, drawsB
+    )
+
+    # Wyświetl wyniki
+    print(f"Przewidywane prawdopodobieństwo dla: Wygrana {win_prob_teamA * 100:.2f}%, Remis {draw_prob * 100:.2f}%, Przegrana {win_prob_teamB * 100:.2f}%")
+
+
     conn.close()
-    return render_template('prematchA.html', teamA=teamA, teamB=teamB, logoA=logoA, logoB=logoB, srednia_teamA=srednia_teamA, match=match, srednia_teamB=srednia_teamB, prawdopodobienstwa_teamA=szanse_teamA, prawdopodobienstwa_teamB=szanse_teamB)
+    return render_template('prematchA.html',win_prob_teamA= win_prob_teamA, draw_prob=draw_prob, win_prob_teamB=win_prob_teamB, teamA=teamA, teamB=teamB, logoA=logoA, logoB=logoB, srednia_teamA=srednia_teamA, match=match, srednia_teamB=srednia_teamB, prawdopodobienstwa_teamA=szanse_teamA, prawdopodobienstwa_teamB=szanse_teamB)
+def poisson_probability(lmbda, k):
+    return (math.exp(-lmbda) * lmbda**k) / math.factorial(k)
+
+def predicted_probabilities(winsA, winsAB, winsBA, winsB, ilosc_meczyA, ilosc_meczyAB, ilosc_meczyB, drawsA, drawsB, drawsAB):
+
+    win_prob_teamA = (winsA + winsAB)/(ilosc_meczyA+ilosc_meczyAB) 
+    win_prob_teamB = (winsB + winsBA)/(ilosc_meczyB+ilosc_meczyAB) 
+    draw_prob = (drawsA+drawsB+drawsAB)/(ilosc_meczyA+ilosc_meczyB+ilosc_meczyAB)
+    # Oblicz sumę wszystkich prawdopodobieństw
+    total_probability = win_prob_teamA + win_prob_teamB + draw_prob
+
+    # Znormalizuj prawdopodobieństwa
+    win_prob_teamA = win_prob_teamA / total_probability
+    win_prob_teamB = win_prob_teamB / total_probability
+    draw_prob = draw_prob / total_probability
+    return win_prob_teamA, draw_prob, win_prob_teamB
+
+@app.route('/submit_form', methods=['POST'])
+def submit_form():
+    
+    input1 = request.form['input1']
+    matchID = request.form['matchID']
+
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    cursor.execute("UPDATE matches SET date=? WHERE matchID=?", (input1, matchID))
+    conn.commit()
+    conn.close() 
+
+    return redirect(url_for('update', matchID=matchID))
+
+
+@app.route('/submit_form_cat', methods=['POST'])
+def submit_form_cat():
+    matchID = request.form['matchID']
+    inputh_values = [request.form[f'inputh{i}'] for i in range(1, 16)]
+    inputa_values = [request.form[f'inputa{i}'] for i in range(1, 16)]
+
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+
+    # Iteruj przez indeksy od 1 do 15 i wstaw wartości do tabeli stats
+    for i in range(1, 16):
+        categoryid = i  # Zakładając, że categoryid to numer od 1 do 15
+        home_value = inputh_values[i-1]
+        away_value = inputa_values[i-1]
+
+        # Wstaw dane do tabeli stats
+        cursor.execute("INSERT INTO stats (match_id, categoryid, home_value, away_value) VALUES (?, ?, ?, ?)",
+                       (matchID, categoryid, home_value, away_value))
+
+    # Zatwierdź zmiany i zamknij połączenie z bazą danych
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('update', matchID=matchID))
+
+@app.route('/submit_form_score', methods=['POST'])
+def submit_form_score():
+    
+    scoreA = request.form['input1']
+    scoreB = request.form['input2']
+    matchID = request.form['matchID']
+
+    conn = sqlite3.connect('football_teams.db')
+    cursor = conn.cursor()
+    cursor.execute("UPDATE matches SET ScoreA=?, ScoreB=? WHERE matchID=?", (scoreA, scoreB, matchID))
+    conn.commit()
+    conn.close() 
+
+    return redirect(url_for('update', matchID=matchID))
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -45,17 +45,22 @@
                 </ul>
             </div>
 
-            <ul id="played-list">
+            <div class="row custom-padding">
+                <!-- Dodaj kafelki z rozegranymi meczami -->
                 {% for match in played_matches %}
-                <li>
-                    {{ match[0] }}
-                    <br>
-                    <img src="{{ match[5] }}" alt="Logo drużyny" height="13em"> {{ match[1] }} {{ match[2] }}:{{ match[3] }} {{
-                    match[4] }} <img src="{{ match[6] }}" alt="Logo drużyny" height="13em">
-                    <br>
-                </li>
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ match[0] }}</h5>
+                            <p class="card-text text-center">
+                                <img src="{{ match[5] }}" alt="Logo drużyny" height="30"> {{ match[1] }} {{ match[2] }} : {{
+                                match[3] }} {{ match[4] }} <img src="{{ match[6] }}" alt="Logo drużyny" height="30">
+                            </p>
+                        </div>
+                    </div>
+                </div>
                 {% endfor %}
-            </ul>
+            </div>
         <!-- Dodanie Bootstrap JS -->
         <script src="{{ url_for('static', filename='script.js') }}"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
