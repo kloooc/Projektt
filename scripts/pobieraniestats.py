@@ -6,11 +6,17 @@ import sqlite3
 import sys
 
 
+link = sys.argv[1] if len(sys.argv) > 1 else None
+
+if link is None:
+    print("Nie podano linku do skryptu.")
+    sys.exit(1)
+
 # Inicjalizacja przeglądarki (np. Google Chrome)
 driver = webdriver.Chrome()
 
 # Otwarcie strony z wynikami
-driver.get("https://www.flashscore.pl/mecz/xGpXN6Gh/#/szczegoly-meczu/statystyki-meczu/0")
+driver.get(link)
 
 # Poczekaj, aż strona się załaduje (możesz dostosować czas)
 driver.implicitly_wait(10)
@@ -105,17 +111,9 @@ else:
 print(f"Identyfikator drużyny A: {teamA_id}")
 print(f"Identyfikator drużyny B: {teamB_id}")
 
-cursor.execute("SELECT MAX(matchID) FROM matches")
-max_match_id = cursor.fetchone()[0]
 
-# Zwiększ wartość maksymalną o 1, jeśli max_match_id nie jest None (jeśli tabela nie jest pusta)
-next_match_id = max_match_id + 1 if max_match_id is not None else 1
 
-# Wstaw nowy rekord z uzyskanym matchID
-cursor.execute("INSERT INTO matches (matchID, teamA_id, teamB_id, date, scoreA, scoreB) VALUES (?, ?, ?, ?, ?, ?)",
-               (next_match_id, teamA_id, teamB_id, new_date_obj, score[0], score[1]))
-# Zatwierdź zmiany w bazie danych
-conn.commit()
+
 
 cursor.execute("SELECT matchID FROM matches WHERE teamA_id = ? AND teamB_id = ? AND date = ?", (teamA_id,teamB_id, new_date_obj))
 result = cursor.fetchone()
@@ -125,7 +123,10 @@ else:
     matchID = None  # Lub coś innego, jeśli drużyna nie istnieje w bazie
 
 print(f"Match id: {matchID}")
-
+# Wstaw nowy rekord z uzyskanym matchID
+cursor.execute("UPDATE matches SET scoreA=?, scoreB=? WHERE matchID=?", (score[0], score[1], matchID))
+# Zatwierdź zmiany w bazie danych
+conn.commit()
 
 for category, home_value, away_value in zip(category_divs, home_divs, away_divs):
     category_text = category.text.strip()

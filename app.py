@@ -811,12 +811,14 @@ def update():
 
 @app.route('/download_stats', methods=['POST'])
 def download_stats():
+    matchID = request.form['matchID']
     link = request.form['link']
 
     # Tutaj możesz użyć pobrania linku do uruchomienia skryptu z linkiem
-    subprocess.run(["python", "pobieraniestats.py", link])
+    subprocess.run(["python", "scripts/pobieraniestats.py", link])
 
-    return redirect(url_for('show_main'))
+    return redirect(url_for('update', matchID=matchID))
+
 
 @app.route('/logout')
 def logout():

@@ -70,6 +70,7 @@
         <div class="container mt-4">
             <form method="POST" action="/download_stats" class="mb-4">
               <div class="form-group">
+                <input type="hidden" name="matchID" value="{{ matchID }}">
                 <label for="link">Aktualizacja webscrap:</label>
                 <input type="text" class="form-control" id="link" name="link" required>
               </div>
