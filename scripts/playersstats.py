@@ -7,9 +7,9 @@ from selenium.webdriver.common.by import By
 
 # Przygotowanie i otwarcie strony z informacjami o zawodniku
 driver = webdriver.Chrome()
-driver.get("https://www.flashscore.pl/zawodnik/shkurin-ilia/KSnn3dEq/")
+driver.get("https://www.flashscore.pl/zawodnik/tehan-kaj/OrSsAkI5/")
 time.sleep(3)
-player = 249
+player = 448
 # Kliknięcie przycisku "ZOBACZ WSZYSTKIE MECZE"
 see_all_button = driver.find_element(By.CLASS_NAME, 'lmTable__href')
 see_all_button.click()

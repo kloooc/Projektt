@@ -794,14 +794,20 @@ def update():
     cursor.execute("SELECT logo from teams where team=?", (teamB,))
     logoB = cursor.fetchone()
 
-    cursor.execute("SELECT distinct c.category_name, s.home_value, s.away_value FROM stats s JOIN categories c ON s.categoryid = c.categoryid WHERE s.match_id = ?", (matchID,))
+    cursor.execute("SELECT ScoreA from matches where matchID=?", (matchID,))
+    scoreA = cursor.fetchone()
+
+    cursor.execute("SELECT ScoreB from matches where matchID=?", (matchID,))
+    scoreB = cursor.fetchone()
+
+    cursor.execute("SELECT distinct c.category_name, s.home_value, s.away_value  FROM stats s JOIN categories c ON s.categoryid = c.categoryid WHERE s.match_id = ?", (matchID,))
     stats = cursor.fetchall()
         
     # Zamknij połączenie z bazą danych
     conn.close()
 
     
-    return render_template('update.html',matchID=matchID,date=date,statsu=statsu, logoA=logoA, logoB=logoB ,teamA=teamA, teamB=teamB,stats=stats)
+    return render_template('update.html',matchID=matchID,date=date,statsu=statsu, logoA=logoA, logoB=logoB, scoreA=scoreA, scoreB=scoreB, teamA=teamA, teamB=teamB,stats=stats)
 
 @app.route('/download_stats', methods=['POST'])
 def download_stats():
@@ -1774,7 +1780,7 @@ def show_composition():
 
 
     cursor.execute("""
-        SELECT p.full_name, mp.time_played
+        SELECT distinct p.full_name, mp.time_played
         FROM players p
         INNER JOIN player_positions pp ON p.player_id = pp.player_id
         INNER JOIN match_players mp ON p.player_id = mp.player_id
@@ -1855,7 +1861,7 @@ def sezon_23_24():
     ON
         t.id_team = m.teamA_id OR t.id_team = m.teamB_id
     WHERE
-        m.date BETWEEN '2023-07-20 00:00:00' AND '2024-05-26 00:00:00'
+        m.date BETWEEN '2023-07-20 00:00:00' AND '2024-05-26 00:00:00' 
     GROUP BY
         t.id_team
     ORDER BY
@@ -1876,7 +1882,7 @@ def sezon_23_24():
     FROM matches
     INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
     INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
-    WHERE matches.date BETWEEN '2023-07-20 00:00:00' AND '2024-05-26 00:00:00'
+    WHERE matches.date BETWEEN '2023-07-20 00:00:00' AND '2024-05-26 00:00:00' and matches.scoreB is not null
     ORDER BY
         matches.date DESC
     """)
@@ -2086,7 +2092,7 @@ def sezon_20_21():
     ON
         t.id_team = m.teamA_id OR t.id_team = m.teamB_id
     WHERE
-        m.date BETWEEN '2020-07-20 00:00:00' AND '2021-05-26 00:00:00'
+        m.date BETWEEN '2020-08-20 00:00:00' AND '2021-05-18 00:00:00'
     GROUP BY
         t.id_team
     ORDER BY
@@ -2163,7 +2169,7 @@ def sezon_19_20():
     ON
         t.id_team = m.teamA_id OR t.id_team = m.teamB_id
     WHERE
-        m.date BETWEEN '2019-07-20 00:00:00' AND '2020-05-26 00:00:00'
+        m.date BETWEEN '2019-07-19 00:00:00' AND '2020-06-18 00:00:00'
     GROUP BY
         t.id_team
     ORDER BY
@@ -2184,7 +2190,7 @@ def sezon_19_20():
     FROM matches
     INNER JOIN teams AS teamsA ON matches.teamA_id = teamsA.id_team
     INNER JOIN teams AS teamsB ON matches.teamB_id = teamsB.id_team
-    WHERE matches.date BETWEEN '2019-07-20 00:00:00' AND '2020-05-26 00:00:00'
+    WHERE matches.date BETWEEN '2019-07-19 00:00:00' AND '2020-06-18 00:00:00'
     ORDER BY
         matches.date DESC
     """)
@@ -2637,18 +2643,29 @@ def submit_form_cat():
 
 @app.route('/submit_form_score', methods=['POST'])
 def submit_form_score():
-    
     scoreA = request.form['input1']
     scoreB = request.form['input2']
     matchID = request.form['matchID']
 
+    # Sprawdzenie, czy mecz o danym matchID istnieje w tabeli stats
     conn = sqlite3.connect('football_teams.db')
     cursor = conn.cursor()
-    cursor.execute("UPDATE matches SET ScoreA=?, ScoreB=? WHERE matchID=?", (scoreA, scoreB, matchID))
-    conn.commit()
-    conn.close() 
+    cursor.execute("SELECT COUNT(*) FROM stats WHERE match_id=?", (matchID,))
+    match_exists = cursor.fetchone()[0] > 13
+    conn.close()
 
-    return redirect(url_for('update', matchID=matchID))
+    # Jeżeli mecz o danym matchID istnieje, aktualizuj wynik
+    if match_exists:
+        conn = sqlite3.connect('football_teams.db')
+        cursor = conn.cursor()
+        cursor.execute("UPDATE matches SET ScoreA=?, ScoreB=? WHERE matchID=?", (scoreA, scoreB, matchID))
+        conn.commit()
+        conn.close()
+        return redirect(url_for('update', matchID=matchID))
+    else:
+        flash('Nalezy najpierw zaaktualizować statystyki')
+        return redirect(url_for('update', matchID=matchID))
 
+    
 if __name__ == '__main__':
     app.run(debug=True)

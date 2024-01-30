@@ -10,7 +10,7 @@ import sys
 driver = webdriver.Chrome()
 
 # Otwarcie strony z wynikami
-driver.get("https://www.flashscore.pl/mecz/IPGmaljt/#/szczegoly-meczu/statystyki-meczu/0")
+driver.get("https://www.flashscore.pl/mecz/xGpXN6Gh/#/szczegoly-meczu/statystyki-meczu/0")
 
 # Poczekaj, aż strona się załaduje (możesz dostosować czas)
 driver.implicitly_wait(10)
